@@ -1,0 +1,115 @@
+# Note that this file lists all currently supported options but as it has priority ove the command-line arguments,
+# only needed arguments should be written here.
+# For example, setting the verbosity to true can be accomplished by writing a config file containing only the line:
+#  verbose: True
+
+######## GENERAL PARAMETERS ########
+
+# Path to RNA sequences in the FASTA format (if no file set to None)
+fasta: sample_data/weeks_set.fa
+
+# Log transform the data?
+log: True
+
+# Minimum data density (i.e. non 0 or NaNs) to accept a transcript
+min_density: 0.5
+
+# Verbose output?
+verbose: False
+
+# Number of CPUs to use
+n_tasks: -1
+
+# Are those PARS data?
+PARS: False
+
+# Should NaN be considered informative?
+NAN: False
+
+# If set, will not prompt a question if existing output files could be overwritten
+no_prompt: False
+
+# Run in debug mode?
+debug: False
+
+
+
+######## TRAINING PARAMETERS ########
+
+# Convergence criterion
+epsilon: 1e-4
+
+# Maximum number of iterations during training
+maxiter: 100
+
+# Number of RNAs used for training
+n: 10
+
+# No GMM training. If set, only HMM parameters will be trained.
+# Assumes the full GMM (i.e. mean, sigma and w) is known by the user.
+nogmm: False
+
+
+
+######## HMM PARAMETERS ########
+
+# Transition probabilities.
+# Lines correspond to states at nucleotide at t and columns states at nucleotide t+1
+A:   [[0.5, 0.5],
+      [0.5, 0.5]]
+
+# Initial probabilities
+pi:  [0.5, 0.5]
+
+# Probabilities associated with zero observations
+upsilon: [0.15, 0.85]
+
+# Probabilities associated with NaN observations
+phi: [0.5, 0.5]
+
+
+
+######## GMM PARAMETERS ########
+
+# Number of Gaussian components in the model
+k: 2
+
+# Means of the Gaussian Components
+# Lines correspond to states and columns to Gaussian components
+mu: [[ 0.5,  1],
+      [-0.5, -1]]
+
+# Variances of the Gaussian components
+# Lines correspond to states and columns to Gaussian components
+sigma: [[1, 1],
+        [1, 1]]
+
+# Weights of the Gaussian components
+# Lines correspond to states and columns to Gaussian components
+w: [[1, 1],
+    [1, 1]]
+
+
+
+######## SCORING PARAMETERS ########
+
+# Path to a trained model
+model: None
+
+# Motifs that will be searched.
+pattern: None
+
+# Output state posterior probabilities?
+gammas: False
+
+# Output the most likely state path given the data for each transcript
+viterbi: False
+
+# Use sequence constraints when searching for motifs?
+seq: False
+
+# Consider pairs involving a N invalid
+forbid_N_pairs: False
+
+# Apply data quality filters to the test set as well?
+filter_test: False
