@@ -142,7 +142,7 @@ def parse_cl_args(inputargs):
 
 
 def parse_config_yaml(fp):
-    to_array = ["pi", "rho", "phi", "upsilon", "A", "mu", "sigma", "w"]
+    to_array = ["pi", "phi", "upsilon", "A", "mu", "sigma", "w"]
     possible_scientific = ["epsilon", "maxpnan", "wmin"]
 
     # Read input params
@@ -173,7 +173,6 @@ def add_more_defaults(cl_args):
 
     # Add additional defaults available via YAML config only
     defaults = {"pi": None,
-                "rho": None,
                 "A": None,
                 "phi": None,
                 "upsilon": None,

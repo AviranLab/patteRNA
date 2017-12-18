@@ -45,7 +45,6 @@ class GMMHMM:
             N (int): Number of states.
             states (np.array): Vector of unique possible states.
             pi (np.array): Initial probabilities.
-            rho (np.array): Final probabilities.
             A (np.array): Transition probability matrix.
             logL (float): Log likelihood of the model.
             phi (np.array): Probabilities for NaNs.
@@ -80,7 +79,6 @@ class GMMHMM:
 
         # HMM params
         self.pi = None
-        self.rho = None
         self.A = None
         self.logL = None
         self.phi = None
@@ -215,13 +213,12 @@ class GMMHMM:
 
         return rna
 
-    def initialize_HMM(self, N, pi, rho, A, phi, upsilon):
+    def initialize_HMM(self, N, pi, A, phi, upsilon):
         """Initialize the HMM model parameters.
 
         Args:
             N (int): Number of states.
             pi (np.array): Initial probabilities.
-            rho (np.array): Final probabilities.
             A (np.array): Transition probability matrix.
             phi (np.array): Probability vector for NaNs.
             upsilon (np.array): Probability vector for zeros.
@@ -232,7 +229,6 @@ class GMMHMM:
         self.N = N
         self.states = np.arange(N)
         self.pi = np.repeat(1 / self.N, self.N) if pi is None else pi
-        self.rho = np.ones(self.N, dtype=DTYPES["p"]) if rho is None else rho
         self.A = np.tile(1 / self.N, (self.N, self.N)) if A is None else A
         self.phi = np.repeat(np.sum(self.train_set.T_nan * (1 / self.N)) / self.train_set.T, self.N)
         if phi is not None:
@@ -599,7 +595,6 @@ class GMMHMM_SingleObs:
             N (int): Number of states.
             states (np.array): Vector of unique possible states.
             pi (np.array): Initial probabilities.
-            rho (np.array): Final probabilities.
             A (np.array): Transition probability matrix.
             logL (float): Log likelihood of the model.
             phi (np.array): Probabilities for NaNs.
@@ -635,7 +630,6 @@ class GMMHMM_SingleObs:
         self.N = None
         self.states = None
         self.pi = None
-        self.rho = None
         self.A = None
         self.logL = None
         self.phi = None
@@ -715,10 +709,6 @@ class GMMHMM_SingleObs:
             else:
                 self.B_mixture[i, self.mask_0, :] = self.upsilon[i] * self.w[i, :]
 
-        # Adjust for final state probabilities
-        for k in range(self.K):
-            self.B_mixture[:, -1, k] *= self.rho
-
         self.B = np.sum(self.B_mixture, axis=2)
 
     def fwd_bkw(self):
@@ -748,16 +738,13 @@ class GMMHMM_SingleObs:
             else:
                 self.alpha[:, t] = np.dot(self.A.T, self.alpha[:, t - 1]) * self.B[:, t]
 
-            if t == (self.T - 1):
-                self.alpha[:, t] *= self.rho
-
             self.c[t] = 1 / np.sum(self.alpha[:, t])
             self.alpha[:, t] *= self.c[t]
             self.logL += -np.log(self.c[t])
 
         # Backward pass
         self.beta = np.zeros(self.B.shape, dtype=DTYPES["p"])
-        self.beta[:, -1] = self.rho * self.c[-1]
+        self.beta[:, -1] = 1
 
         # noinspection PyTypeChecker
         for t in range(self.T - 1)[::-1]:
@@ -1010,14 +997,12 @@ def path_repo2scores(fp, rna, path_repo):
             path_iv = range(curr_path["start"], curr_path["end"])
             path = [str(i) for i in curr_path["path"][path_iv]]
 
-            f.write("{} {:d} {:d} {:.3g} {} {} {}\n".format(rna.name,
-                                                            curr_path["start"],
-                                                            curr_path["end"],
-                                                            score,
-                                                            "".join(path),
-                                                            "".join(np.array(list(rna.seq))[path_iv]),
-                                                            " ".join(["{:.3g}".format(obs) for obs in
-                                                                      rna.original_obs[path_iv]])))
+            f.write("{} {:d} {:d} {:.3g} {} {}\n".format(rna.name,
+                                                         curr_path["start"],
+                                                         curr_path["end"],
+                                                         score,
+                                                         "".join(path),
+                                                         "".join(np.array(list(rna.seq))[path_iv])))
     LOCK.release()
 
 
@@ -1025,13 +1010,12 @@ def write_score_header(fp):
     """Write the output scoring file header."""
 
     with open(fp, "w") as f:
-        header = "{} {} {} {} {} {} {}\n".format("transcript",
-                                                 "start",
-                                                 "end",
-                                                 "score",
-                                                 "path",
-                                                 "seq",
-                                                 "observation")
+        header = "{} {} {} {} {} {}\n".format("transcript",
+                                              "start",
+                                              "end",
+                                              "score",
+                                              "path",
+                                              "seq")
         f.write(header)
 
 

@@ -39,6 +39,12 @@ def read_fasta(fp):
                     seq = ""
                 else:
                     seq += line.strip()
+
+            # Read the last entry
+            if tr_name is not None:
+                seq = check_sequence(seq, tr_name=tr_name)  # Check if the sequence is valid
+                rnas[tr_name] = seq
+
     except FileNotFoundError:
         logger.error("No input sequence file found at {}.".format(fp))
         sys.exit()
@@ -47,7 +53,7 @@ def read_fasta(fp):
 
 
 def check_sequence(seq, tr_name="unnamed"):
-    """Check that an RNA sequence is valid.
+    """Check if an RNA sequence is valid.
 
     Args:
         seq (str): RNA sequences
@@ -98,6 +104,13 @@ def read_fastaobs(fp):
                     obs = ""
                 else:
                     obs += line.strip()
+
+            # Read the last entry
+            if tr_name is not None:
+                obs = obs.strip().split()
+                obs = [word.replace('NA', 'nan') for word in obs]  # Handle NA
+                rnas[tr_name] = np.array(obs, dtype=DTYPES["obs"])
+
     except FileNotFoundError:
         logger.error("No input observation file found at {}.".format(fp))
         sys.exit()

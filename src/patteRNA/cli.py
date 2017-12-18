@@ -23,7 +23,7 @@ def main(testcmd=None):
     do_training = False
     do_scoring = False
     fp_out = None
-    is_GQ = None
+    is_gquad = None
     main_time = misclib.timer_start()
 
     # Input arguments handling
@@ -53,11 +53,11 @@ def main(testcmd=None):
                 logger.error("No FASTA file provided. G-quaruplexes cannot be found without RNA sequences.")
                 sys.exit()
 
-            is_GQ = True
+            is_gquad = True
             patterns = args.pattern.split("[")[1].replace("]", "").split(",")
             patterns = [int(i) for i in patterns]
         else:  # Canonical motifs
-            is_GQ = False
+            is_gquad = False
             patterns = patternlib.pattern_builder(args.pattern, args.seq, args.forbid_N_pairs)
 
     # Check if we need a training phase
@@ -172,7 +172,7 @@ def main(testcmd=None):
 
         # Import the data and initialize the model
         hmm.import_data(train_set=train_set)
-        hmm.initialize_HMM(N=2, pi=args.pi, rho=args.rho, A=args.A, phi=args.phi, upsilon=args.upsilon)
+        hmm.initialize_HMM(N=2, pi=args.pi, A=args.A, phi=args.phi, upsilon=args.upsilon)
         hmm.initialize_GMM(K=args.k, mu=args.mu, sigma=args.sigma, w=args.w, w_min=args.wmin)
 
         # Train the model
@@ -242,7 +242,7 @@ def main(testcmd=None):
             hmm.score(rnas=curr_batch,
                       patterns=patterns,
                       fp_pattern=fp_out,
-                      is_GQ=is_GQ,
+                      is_GQ=is_gquad,
                       fp_viterbi=fp_viterbi,
                       fp_gammas=fp_gammas)
 

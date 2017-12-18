@@ -29,10 +29,10 @@ This command should print the current installed version of Python3. If it did, f
 You can install patteRNA directly from the source distribution. First, download the source distribution tarball by entering the command:
 
 ```
-wget https://raw.github.com/AviranLab/patteRNA/master/dist/patteRNA-1.0.0.tar.gz
+wget https://raw.github.com/AviranLab/patteRNA/master/dist/patteRNA-latest.tar.gz
 ```
 
-Once dowloaded, extract the tarball and move into the extracted folder:
+Once downloaded, extract the tarball and move into the extracted folder:
 
 ```
 tar -xzf patteRNA-1.0.0.tar.gz
@@ -122,7 +122,6 @@ Scored motifs are available in the file `score.txt` in the output directory. Thi
 - Motif's score
 - Motif's numerical state-sequence (i.e. path) encoded as 0/1 for unpaired/paired bases, respectively.
 - RNA sequence at the motif's location
-- Observed profiling data at the motif's location
 
 ### Additional outputs
 #### Viterbi path
