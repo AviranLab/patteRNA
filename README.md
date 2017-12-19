@@ -35,8 +35,8 @@ wget https://raw.github.com/AviranLab/patteRNA/master/dist/patteRNA-latest.tar.g
 Once downloaded, extract the tarball and move into the extracted folder:
 
 ```
-tar -xzf patteRNA-1.0.0.tar.gz
-cd patteRNA-1.0.0
+tar -xzf patteRNA-latest.tar.gz
+cd patteRNA-latest
 ```
 
 Run the installation by entering the command:
