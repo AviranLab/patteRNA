@@ -89,7 +89,7 @@ def parse_cl_args(inputargs):
                              "unpaired nucleotides are represented by parentheses '()' and dots '.', respectively. A "
                              "stretch of consecutive characters is declared using the format <char>{<from>, <to>}. "
                              "For example, use .{2,4} to declare 2 to 4 consecutive repeats of unpaired nucleotides "
-                             "in the pattern. For G-Quadruplexes, use GQ[min, max quartet, min, max loop]")
+                             "in the pattern.")
     parser.add_argument("-s", "--seq",
                         action="store_true",
                         help="Use sequence constraints when searching for motifs")

@@ -1,4 +1,4 @@
-2017-12-18 13:26 - DEBUG - cli : 117 - 
+2017-12-19 22:26 - DEBUG - cli : 117 - 
 =========================================================
 Running pattern mining with the following parameters:
 =========================================================
@@ -37,13 +37,13 @@ viterbi: True
 w: None
 wmin: 0
 =========================================================
-2017-12-18 13:26 - INFO - cli : 119 - Target pattern -> ((((....))))
-2017-12-18 13:26 - INFO - gmmhmm : 958 - Running patteRNA using 4 parallel processes.
-2017-12-18 13:26 - INFO - cli : 136 - Loading input data ...
-2017-12-18 13:26 - INFO - cli : 154 - Loading ... done in 00:00:00
-2017-12-18 13:26 - INFO - cli : 156 - Transcript #: Initial 21 | Train 21
-2017-12-18 13:26 - INFO - cli : 170 - Training ...
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - cli : 119 - Target pattern -> ((((....))))
+2017-12-19 22:26 - INFO - gmmhmm : 958 - Running patteRNA using 4 parallel processes.
+2017-12-19 22:26 - INFO - cli : 136 - Loading input data ...
+2017-12-19 22:26 - INFO - cli : 154 - Loading ... done in 00:00:00
+2017-12-19 22:26 - INFO - cli : 156 - Transcript #: Initial 21 | Train 21
+2017-12-19 22:26 - INFO - cli : 170 - Training ...
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.5  0.5]
 A: 
@@ -66,8 +66,8 @@ P(States|y):
 [ 0.5  0.5]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #1 : logL -24323.92
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #1 : logL -24323.92
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.33324094  0.66675906]
 A: 
@@ -90,8 +90,8 @@ P(States|y):
 [ 0.21661075  0.78338925]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #2 : logL -20386.63
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #2 : logL -20386.63
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.33147147  0.66852853]
 A: 
@@ -114,8 +114,8 @@ P(States|y):
 [ 0.23582134  0.76417866]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #3 : logL -19884.62
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #3 : logL -19884.62
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.34885759  0.65114241]
 A: 
@@ -138,8 +138,8 @@ P(States|y):
 [ 0.28418963  0.71581037]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #4 : logL -19331.4
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #4 : logL -19331.4
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.36835876  0.63164124]
 A: 
@@ -162,8 +162,8 @@ P(States|y):
 [ 0.34229952  0.65770048]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #5 : logL -18883.91
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #5 : logL -18883.91
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.38023751  0.61976249]
 A: 
@@ -186,8 +186,8 @@ P(States|y):
 [ 0.3746825  0.6253175]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #6 : logL -18725.71
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #6 : logL -18725.71
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.39057312  0.60942688]
 A: 
@@ -210,8 +210,8 @@ P(States|y):
 [ 0.3891434  0.6108566]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #7 : logL -18680.48
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #7 : logL -18680.48
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.40270785  0.59729215]
 A: 
@@ -234,8 +234,8 @@ P(States|y):
 [ 0.3981049  0.6018951]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #8 : logL -18662.07
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #8 : logL -18662.07
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.41576313  0.58423687]
 A: 
@@ -258,8 +258,8 @@ P(States|y):
 [ 0.40514957  0.59485043]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #9 : logL -18652.13
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #9 : logL -18652.13
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.4283041  0.5716959]
 A: 
@@ -282,8 +282,8 @@ P(States|y):
 [ 0.4110535  0.5889465]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #10 : logL -18645.82
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #10 : logL -18645.82
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.43948065  0.56051935]
 A: 
@@ -306,8 +306,8 @@ P(States|y):
 [ 0.41602897  0.58397103]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #11 : logL -18641.37
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #11 : logL -18641.37
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.44901793  0.55098207]
 A: 
@@ -330,8 +330,8 @@ P(States|y):
 [ 0.42019779  0.57980221]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #12 : logL -18638.01
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #12 : logL -18638.01
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.45697337  0.54302663]
 A: 
@@ -354,8 +354,8 @@ P(States|y):
 [ 0.42366934  0.57633066]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #13 : logL -18635.35
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #13 : logL -18635.35
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.4635433  0.5364567]
 A: 
@@ -378,8 +378,8 @@ P(States|y):
 [ 0.42654767  0.57345233]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #14 : logL -18633.16
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #14 : logL -18633.16
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.46895518  0.53104482]
 A: 
@@ -404,8 +404,8 @@ P(States|y):
 [ 0.42892891  0.57107109]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #15 : logL -18631.29
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #15 : logL -18631.29
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.47342038  0.52657962]
 A: 
@@ -428,8 +428,8 @@ P(States|y):
 [ 0.43089854  0.56910146]
 
 
-2017-12-18 13:26 - INFO - gmmhmm : 578 - iter #16 : logL -18629.63
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - INFO - gmmhmm : 578 - iter #16 : logL -18629.63
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.47711916  0.52288084]
 A: 
@@ -452,7 +452,7 @@ P(States|y):
 [ 0.43252991  0.56747009]
 
 
-2017-12-18 13:26 - DEBUG - gmmhmm : 332 - 
+2017-12-19 22:26 - DEBUG - gmmhmm : 332 - 
 pi: 
 [ 0.47711916  0.52288084]
 A: 
@@ -475,11 +475,11 @@ P(States|y):
 [ 0.43252991  0.56747009]
 
 
-2017-12-18 13:26 - INFO - cli : 186 - Training ... done in 00:00:13
-2017-12-18 13:26 - INFO - cli : 197 - Building the scoring set ...
-2017-12-18 13:26 - INFO - cli : 207 - Building the scoring set ... done
-2017-12-18 13:26 - INFO - cli : 208 - Computing scores for 21 transcripts ...
-2017-12-18 13:26 - DEBUG - cli : 250 - Computing scores... 0/21
-2017-12-18 13:26 - INFO - cli : 254 - Computing scores... done in 00:00:04
-2017-12-18 13:26 - INFO - cli : 255 - Process terminated in 00:00:17
-2017-12-18 13:26 - INFO - cli : 256 - Output written to -> sample_data/sample_output
+2017-12-19 22:26 - INFO - cli : 186 - Training ... done in 00:00:16
+2017-12-19 22:26 - INFO - cli : 197 - Building the scoring set ...
+2017-12-19 22:26 - INFO - cli : 207 - Building the scoring set ... done
+2017-12-19 22:26 - INFO - cli : 208 - Computing scores for 21 transcripts ...
+2017-12-19 22:26 - DEBUG - cli : 250 - Computing scores... 0/21
+2017-12-19 22:26 - INFO - cli : 254 - Computing scores... done in 00:00:06
+2017-12-19 22:26 - INFO - cli : 255 - Process terminated in 00:00:23
+2017-12-19 22:26 - INFO - cli : 256 - Output written to -> sample_data/sample_output

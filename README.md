@@ -105,13 +105,9 @@ This command will generate an output folder `dummy_test` in the current director
 - A folder `iterative_learning/` that contains plots of the fitted data at each training iteration.
 
 ### Scoring structural motifs
-patteRNA currently supports structural motifs that contain no gaps as well as G-quadruplexes. Motifs are declared using the `--pattern` option. This option can be used in conjunction with training to perform both training and scoring within a single command. However, we recommend to train patteRNA first and use the trained model in subsequent searches for motifs. The trained model is saved in `trained_model.pickle` and can be loaded using the flag `--model`.
+patteRNA currently supports structural motifs that contain no gaps. Motifs are declared using the `--pattern` option. This option can be used in conjunction with training to perform both training and scoring within a single command. However, we recommend to train patteRNA first and use the trained model in subsequent searches for motifs. The trained model is saved in `trained_model.pickle` and can be loaded using the flag `--model`.
 
-#### Standard patterns
-For standard motifs, we use an extended dot-bracket notation where stretches of consecutive repeats are denoted by curly brackets. For instance, an hairpin of stem size 4 and loop size 5 can be declared by `((((.....))))` (full form) or alternatively `({4}.{5}){4}` (short form). Curly brackets can also be used to indicate stretches of varying length using the covention `{<from>,<to>}`. For example, all loops of size 2 to 7 can be declared as `.{2,7}`. Constraining the motif to only regions where the RNA sequences would allow it to fold is done by using the flag `-s`. To apply sequence constraints, RNA sequences must be provided in a FASTA file inputted using the option `-f <FASTA.fa>`. See [example commands](#examples).
-
-#### G-quadruplexes
-G-quadruplexes are declared using the notation `GQ[min, max quartet, min, max loop]`, where loop indicates the space between G-columns. For example `GQ[2,3,3,7]` will request a search for all G-quadruplexes with quartets of size 2 to 3 and where G-columns are separated by loops of size 3 to 7. Because putative G-quadruplexes are identified using RNA sequences, these need to be provided in a FASTA file inputted using the option `-f <FASTA.fa>`. See [example commands](#examples).
+Motifs are declared using an extended dot-bracket notation where stretches of consecutive repeats are denoted by curly brackets. For instance, an hairpin of stem size 4 and loop size 5 can be declared by `((((.....))))` (full form) or alternatively `({4}.{5}){4}` (short form). Curly brackets can also be used to indicate stretches of varying length using the covention `{<from>,<to>}`. For example, all loops of size 2 to 7 can be declared as `.{2,7}`. Constraining the motif to only regions where the RNA sequences would allow it to fold is done by using the flag `-s`. To apply sequence constraints, RNA sequences must be provided in a FASTA file inputted using the option `-f <FASTA.fa>`. See [example commands](#examples).
 
 #### Output
 Scored motifs are available in the file `score.txt` in the output directory. This file contains the following columns:
@@ -150,14 +146,6 @@ Note that in the examples provided below we use the same probing data file for b
     ```
 
     > Note that sequence constraints "-s" was used in this example to ensure we scored hairpins specifically.
-
-* Search for G-quadruplex with quartet size 2 to 3 and separating loops of length 3 to 7:
-
-    ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vls --model dummy_test/trained_model.pickle -f sample_data/weeks_set.fa --pattern "GQ[2,3,3,7]"
-    ```
-
-    > Note that sequence constraints are automatically applied regardless of the `-s` flag when searching for G-quadruplex.
 
 * Request the Viterbi path and the Posterior state probabilities using a trained model:
 
