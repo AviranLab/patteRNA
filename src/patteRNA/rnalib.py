@@ -23,9 +23,6 @@ import random
 from . import globalbaz
 from . import file_handler
 
-# Initialize globals
-DTYPES = globalbaz.DTYPES
-
 # Initialize the logger
 logger = logging.getLogger(__name__)
 
@@ -137,19 +134,32 @@ class RNAset:
         if self.rnas:
             random.shuffle(self.rnas)
 
-        new_set = RNAset()
+        qc_set = RNAset()  # QCed set
+        ref_set = RNAset()  # Set with reference secondary structures
+
         cnt = 0
 
         for rna in self.rnas:
-
-            if rna.T == len(rna.seq):  # Ensure sequence and observations match in length
+            # Assess that lengths of observation, sequence and structure match.
+            if rna.T == len(rna.seq):
                 p_nan = np.sum(rna.T_nan | rna.T_0) / rna.T
 
                 if ((1-p_nan) >= min_density) & (cnt < n):
-                    new_set.add_rna(rna)
+                    qc_set.add_rna(rna)
                     cnt += 1
 
-        return new_set
+                if rna.ref_dot is not None:
+                    if rna.T == len(rna.ref_dot):
+                        ref_set.add_rna(rna)
+                    else:
+                        # Raise warning for transcripts that do not match in length
+                        logger.warning("Dot-bracket is not matching the length of transcript -> {}".format(rna.name))
+
+            else:
+                # Raise warning for transcripts that do not match in length
+                logger.warning("Input data are not matching in length for transcript -> {}".format(rna.name))
+
+        return qc_set, ref_set
 
 
 class RNA:
@@ -160,8 +170,8 @@ class RNA:
     Attributes:
         name (str): RNA name.
         obs (np.array): Chemical probing reactivities.
-        original_obs (np.array): Original chemical probing reactivities before any transformations.
         seq (str): RNA sequence.
+        ref_dot (str): Reference secondary structure in dot-bracket notation.
         mask_nan (np.array): Boolean mask to select missing observations.
         mask_0 (np.array): Boolean mask to select zero observations.
         T (int): Length of the RNA
@@ -171,15 +181,14 @@ class RNA:
 
     """
 
-    def __init__(self, name, obs, seq):
+    def __init__(self, name, obs, seq, ref_dot):
         """Initialize attributes."""
 
         # Set attributes
         self.name = name  # RNA name
-        self.obs = np.array(obs, dtype=DTYPES["obs"])  # RNA probing profile
-        self.original_obs = np.array(obs, dtype=DTYPES["obs"])  # Keep a copy of the original probing profile
+        self.obs = np.array(obs, dtype=globalbaz.GLOBALS["dtypes"]["obs"])  # RNA probing profile
         self.seq = seq  # RNA sequence
-
+        self.ref_dot = ref_dot  # Reference secondary structure
         self.mask_nan = np.isnan(self.obs)
         self.mask_0 = self.obs == 0
         self.T = len(self.obs)
@@ -203,12 +212,13 @@ class RNA:
 
 
 # noinspection PyUnusedLocal
-def build_rnalib_from_files(fp_seq, fp_obs):
+def build_rnalib_from_files(fp_seq, fp_obs, fp_ref):
     """Reads both the sequence and the observations transcriptome-wide.
     
     Args:
-        fp_seq (str): Pointer to the FASTA file containing the sequences.
+        fp_seq (str): Pointer to the FASTA file containing the sequences
         fp_obs (str): Pointer to the observation file (in FASTA-like format)
+        fp_ref (str): FASTA-like file of reference secondary structures in dot-bracket notation
 
     Returns:
         rna_set (RNAset): Set of RNAs with both sequences and observations.
@@ -219,29 +229,40 @@ def build_rnalib_from_files(fp_seq, fp_obs):
     rna_set = RNAset()
 
     # Read the observation data
-    observations = file_handler.read_fastaobs(fp_obs)
+    observations = file_handler.read_observations(fp_obs)
 
     for rna, obs in observations.items():
         putative_rnas[rna] = {"seq": "N"*len(obs),
-                              "obs": np.array(obs, dtype=DTYPES["obs"])}
+                              "obs": obs,
+                              "ref_dot": None}
     observations = None  # rm entry
 
-    # Read sequences from the fasta file if it exist and update the dictionary
+    # Read sequences if provided and update the dictionary
     if fp_seq:
-        fasta = file_handler.read_fasta(fp_seq)
+        fasta = file_handler.read_sequences(fp_seq)
 
         for rna, seq in fasta.items():
             if rna in putative_rnas.keys():
                 putative_rnas[rna]["seq"] = seq
-        fasta = None  # rm entry
+        fasta = None  # garbage collection
+
+    # Read reference secondary structures if provided and update the dictionary
+    if fp_ref:
+        ref_structures = file_handler.read_reference_structures(fp_ref)
+
+        for rna, ref_dot in ref_structures.items():
+            if rna in putative_rnas.keys():
+                putative_rnas[rna]["ref_dot"] = ref_dot
+        ref_structures = None  # garbage collection
 
     # Build the set of RNAs
     for rna in putative_rnas.keys():
         current_rna = RNA(name=rna,
                           obs=putative_rnas[rna]["obs"],
-                          seq=putative_rnas[rna]["seq"])
+                          seq=putative_rnas[rna]["seq"],
+                          ref_dot=putative_rnas[rna]["ref_dot"])
         rna_set.add_temporary_rna(current_rna)
-        putative_rnas[rna] = None  # rm entry
+        putative_rnas[rna] = None  # garbage collection
 
     return rna_set
 

@@ -7,24 +7,14 @@ import pygal
 import warnings
 import functools
 from copy import deepcopy
-
+from sklearn.mixture import GaussianMixture
 from . import misclib
 from . import rnalib
 from . import globalbaz
 from . import patternlib
 
 # Initialize globals
-N_TASKS = globalbaz.N_TASKS
-SEQ_CONSTRAINTS = globalbaz.SEQ_CONSTRAINTS
-VERBOSE = globalbaz.VERBOSE
-OUTPUT = globalbaz.OUTPUT
-DTYPES = globalbaz.DTYPES
-NO_GMM = globalbaz.NO_GMM
-PARS = globalbaz.PARS
-NAN = globalbaz.NAN
-MAXTASKPERCHILD = globalbaz.MAXTASKPERCHILD
-OUTPUT_NAME = globalbaz.OUTPUT_NAME
-
+GLOBALS = globalbaz.GLOBALS  # Initialize globals
 LOCK = multiprocessing.Lock()  # Lock for parallel processes
 
 # Initialize the logger
@@ -123,21 +113,25 @@ class GMMHMM:
 
         self.train_set.rnas = None  # Garbage collection
 
-    def score(self, rnas, patterns, fp_pattern, is_GQ, fp_viterbi, fp_gammas):
+    def score(self, rnas, patterns, fp_score, is_GQ, fp_viterbi, fp_gammas):
         """Scoring phase. Parallelized with respect to RNAs.
 
         Args:
             rnas (list): List of RNAs used for prediction based on the trained GMM-HMM.
             patterns (list or Pattern obj): Patterns to be scored
-            fp_pattern (str): Output score file
+            fp_score (str): Output score file
             is_GQ (bool): Are we scoring G-quadruplexes?
             fp_viterbi (str): If set then decode the Viterbi path and output to this file
             fp_gammas (str): If set then compute hidden state posteriors (gammas) and output to this file
         """
 
         # Set NaNs to current values of the last EM-step (i.e. no re-initialization of phi)
-        global NAN
-        NAN = True
+        global GLOBALS
+        GLOBALS["nan"] = True
+
+        # Write the score file header if needed
+        if patterns is not None:
+            write_score_header(fp_score)
 
         # Spawn a GMMHMM_SingleObs object for each RNA
         self.test_children = []
@@ -153,7 +147,7 @@ class GMMHMM:
         pool = pool_init()
         worker = functools.partial(self.score_worker,
                                    patterns=patterns,
-                                   fp_pattern=fp_pattern,
+                                   fp_score=fp_score,
                                    is_GQ=is_GQ,
                                    fp_viterbi=fp_viterbi,
                                    fp_gammas=fp_gammas)
@@ -170,7 +164,7 @@ class GMMHMM:
             pass
 
     @staticmethod
-    def score_worker(rna, patterns, fp_pattern, is_GQ, fp_viterbi, fp_gammas):
+    def score_worker(rna, patterns, fp_score, is_GQ, fp_viterbi, fp_gammas):
         """Parallelized worker for the score function."""
 
         rna.get_b()  # Build emissions for this RNA
@@ -180,91 +174,220 @@ class GMMHMM:
             rna.precompute_logB_ratios()  # Pre-compute single nucleotide emission ratios for pattern scoring
             if is_GQ:
                 gquad_scorer(rna=rna,
-                             fp=fp_pattern,
+                             fp=fp_score,
                              min_quartet=patterns[0],
                              max_quartet=patterns[1],
                              min_loop=patterns[2],
                              max_loop=patterns[3])
             else:
                 pattern_scorer(rna=rna,
-                               fp=fp_pattern,
+                               fp=fp_score,
                                patterns=patterns)
 
         if fp_viterbi is not None:
+            rna.viterbi_decoding()  # Viterbi algorithm
+            path = rna.viterbi_path["path"]
+            path = "".join([str(i) for i in path])
+
             LOCK.acquire()
             with open(fp_viterbi, "a") as f:
-                rna.viterbi_decoding()  # Viterbi algorithm
-                path = rna.viterbi_path["path"]
-                path = [str(i) for i in path]
-                f.write(">{}\n{}\n".format(rna.name, " ".join(path)))
+                f.write(">{}\n{}\n".format(rna.name, path))
             LOCK.release()
 
         if fp_gammas is not None:
             _, _, gamma_mix_sum = rna.E_step()  # Estimation step to get state posterior probabilities
+            gamma_mix_sum /= np.sum(gamma_mix_sum, axis=0)[np.newaxis, :]
+
+            out_txt = ""
+            for i in rna.states:
+                out_txt += "{}\n".format(" ".join(["{:.3g}".format(g) for g in gamma_mix_sum[i, :]]))
 
             LOCK.acquire()
             with open(fp_gammas, "a") as f:
-                f.write(">{}\n".format(rna.name))
-                gamma_mix_sum /= np.sum(gamma_mix_sum, axis=0)[np.newaxis, :]
-                for i in rna.states:
-                    out = ["{:.3g}".format(g) for g in gamma_mix_sum[i, :]]
-                    f.write("{}\n".format(" ".join(out)))
+                f.write(">{}\n{}".format(rna.name, out_txt))
             LOCK.release()
 
         return rna
 
-    def initialize_HMM(self, N, pi, A, phi, upsilon):
-        """Initialize the HMM model parameters.
+    def determine_k(self, N):
+        """Determine an optimal K automatically based on training data. Selection is based on Aikaike information
+        criteria computed on increasing number of components, i.e. for models of increasing complexity.
 
         Args:
             N (int): Number of states.
+
+        """
+
+        k = 0
+        optimal_aic = np.inf
+        AICs = []
+        found_optimum = False
+
+        # Gather data
+        x = []
+        mask_nan = []
+        mask_0 = []
+
+        for rna in self.train_set.rnas:
+            x += list(rna.obs)
+            mask_nan += list(rna.mask_nan)
+            mask_0 += list(rna.mask_0)
+
+        # Prepare the data
+        mask_nan = np.array(mask_nan)
+        mask_0 = np.array(mask_0)
+        x = np.array(x, dtype=GLOBALS["dtypes"]["obs"])
+        x[mask_nan | mask_0] = np.nan  # Mask zeros and Nans
+
+        while found_optimum is False:
+            k += 1
+            _, _, _, curr_aic = scikit_gmm_fit(x, k * N)
+            AICs.append(curr_aic)
+
+            if optimal_aic <= curr_aic:
+                found_optimum = True
+                # The previous K was optimal, however we will give it some additional room by selecting k+1 as optimal
+            else:
+                optimal_aic = curr_aic
+
+        return k, AICs
+
+    def initialize_model(self, N, K,
+                         pi=None, A=None,
+                         mu=None, sigma=None, w=None, w_min=None,
+                         phi=None, upsilon=None,
+                         reference_set=None):
+        """Initialize model's parameters.
+
+        Args:
+            N (int): Number of states.
+            K (int): Number of Gaussian components in the Gaussian Mixture model.
             pi (np.array): Initial probabilities.
             A (np.array): Transition probability matrix.
+            mu (np.array): Means of the Gaussian components.
+            sigma (np.array): Variance of the Gaussian components.
+            w (np.array): Gaussian components weights.
+            w_min (float): Minimum Gaussian component weight allowed.
+            phi (np.array): Probability vector for NaNs.
+            upsilon (np.array): Probability vector for zeros.
+            reference_set (RNAlib): RNAlib object with reference secondary structures in dot-bracket notation.
+        """
+
+        self.K = K
+        self.N = N
+        self.states = np.arange(N)
+        n_ref = len(reference_set.rnas)
+
+        if n_ref > 0:
+            # Supervised initialization
+            self.pi, self.A = hmm_counter(self.N, reference_set)  # HMM
+            self.supervised_GMM_init(reference_set=reference_set, w_min=w_min)  # GMM
+            logger.info("Initializing model's parameters based on {} reference structures.".format(n_ref))
+
+        else:
+            # Unsupervised initialization
+            # HMM
+            self.pi = np.repeat(1 / self.N, self.N) if pi is None else pi
+            self.A = np.tile(1 / self.N, (self.N, self.N)) if A is None else A
+
+            # GMM
+            self.unsupervised_GMM_init(mu=mu, sigma=sigma, w=w, w_min=w_min, phi=phi, upsilon=upsilon)
+
+    def supervised_GMM_init(self, reference_set, w_min):
+        """Supervised initialization of the GMM parameters using reference secondary structures.
+
+        Args:
+            reference_set (RNAlib): RNAlib object with reference secondary structures in dot-bracket notation.
+            w_min (float): Minimum Gaussian component weight allowed.
+
+        """
+
+        # Gather reference structure data
+        omega = []
+        x = []
+        mask_nan = []
+        mask_0 = []
+
+        for rna in reference_set.rnas:
+            omega += list(rna.ref_dot)
+            x += list(rna.obs)
+            mask_nan += list(rna.mask_nan)
+            mask_0 += list(rna.mask_0)
+
+        omega = np.array(omega, dtype=GLOBALS["dtypes"]["path"])
+        mask_nan = np.array(mask_nan)
+        mask_0 = np.array(mask_0)
+        x = np.array(x, dtype=GLOBALS["dtypes"]["obs"])
+        x[mask_nan | mask_0] = np.nan  # Mask zeros and Nans
+
+        # Split data based on known pairing states and fit a GMM for each state
+        aic = 0
+        mu = []
+        sigma = []
+        w = []
+        phi = []
+        upsilon = []
+
+        n = len(x)  # n datapoints
+
+        for i in range(self.N):
+            sel = omega == i
+
+            # Get phi and upsilon
+            phi += [np.sum(mask_nan[sel]) / n]
+            upsilon += [np.sum(mask_0[sel]) / n]
+
+            # Fit GMM
+            curr_x = x[sel]
+            curr_mu, curr_sigma, curr_w, curr_aic = scikit_gmm_fit(curr_x, self.K)
+
+            mu.append(curr_mu)
+            sigma.append(curr_sigma)
+            w.append(curr_w)
+            aic += curr_aic
+
+        # List to np.arrays
+        self.mu = np.array(mu, dtype=GLOBALS["dtypes"]["obs"]).squeeze()
+        self.sigma = np.array(sigma, dtype=GLOBALS["dtypes"]["obs"]).squeeze()
+        self.w = np.array(w, dtype=GLOBALS["dtypes"]["obs"]).squeeze()
+        self.w_min = w_min
+        self.phi = np.array(phi, dtype=GLOBALS["dtypes"]["obs"])
+        self.upsilon = np.array(upsilon, dtype=GLOBALS["dtypes"]["obs"])
+
+        # Make vector matrices when k = 1
+        if self.K == 1:
+            self.mu = self.mu.reshape([-1, 1])
+            self.sigma = self.sigma.reshape([-1, 1])
+            self.w = self.w.reshape([-1, 1])
+
+    def unsupervised_GMM_init(self, mu=None, sigma=None, w=None, w_min=None, phi=None, upsilon=None):
+        """Supervised initialization of the GMM parameters using reference secondary structures.
+
+        Args:
+            mu (np.array): Means of the Gaussian components.
+            sigma (np.array): Variance of the Gaussian components.
+            w (np.array): Gaussian components weights.
+            w_min (float): Minimum Gaussian component weight allowed.
             phi (np.array): Probability vector for NaNs.
             upsilon (np.array): Probability vector for zeros.
 
         """
 
-        # HMM params
-        self.N = N
-        self.states = np.arange(N)
-        self.pi = np.repeat(1 / self.N, self.N) if pi is None else pi
-        self.A = np.tile(1 / self.N, (self.N, self.N)) if A is None else A
-        self.phi = np.repeat(np.sum(self.train_set.T_nan * (1 / self.N)) / self.train_set.T, self.N)
-        if phi is not None:
-            self.phi *= phi / np.sum(phi)
-        self.upsilon = np.repeat(np.sum(self.train_set.T_0) / self.train_set.T, self.N)
-        if upsilon is not None:
-            self.upsilon *= upsilon / np.sum(upsilon)
-
-    def initialize_GMM(self, K, mu, sigma, w, w_min):
-        """Initialize the GMM model parameters.
-
-        Args:
-            K (int): Number of Gaussian components in the Gaussian Mixture model.
-            mu (np.array): Means of the Gaussian components.
-            sigma (np.array): Variance of the Gaussian components.
-            w (np.array): Gaussian components weights.
-            w_min (float): Minimum Gaussian component weight allowed.
-
-        """
-
-        self.K = K
         if w is None:
             self.w = np.tile(1.0, (self.N, self.K))
         else:
-            self.w = np.array(w, dtype=float)
+            self.w = np.array(w, dtype=GLOBALS["dtypes"]["obs"])
         self.w /= np.sum(self.w, axis=1).reshape([-1, 1])  # Ensures sum(weight) == 1 for each state
 
         if mu is None:
-            if PARS:  # As PARS > 0 indicates pairing, we need to initialize the Gaussian means accordingly
+            if GLOBALS["pars"]:  # As PARS > 0 indicates pairing, we need to initialize the Gaussian means accordingly
                 self.mu = np.array([misclib.rand_sample(self.K,
                                                         min_=self.train_set.min_obs,
                                                         max_=0),
                                     misclib.rand_sample(self.K,
                                                         min_=0,
                                                         max_=self.train_set.max_obs)],
-                                   dtype=DTYPES["obs"])
+                                   dtype=GLOBALS["dtypes"]["obs"])
             else:
                 self.mu = np.array([misclib.rand_sample(self.K,
                                                         min_=self.train_set.median_obs,
@@ -272,12 +395,19 @@ class GMMHMM:
                                     misclib.rand_sample(self.K,
                                                         min_=self.train_set.min_obs,
                                                         max_=self.train_set.median_obs)],
-                                   dtype=DTYPES["obs"])
+                                   dtype=GLOBALS["dtypes"]["obs"])
         else:
             self.mu = mu
         self.sigma = np.tile(self.train_set.stdev_obs, (self.N, self.K)) if sigma is None else sigma
 
         self.w_min = w_min
+
+        self.phi = np.repeat(np.sum(self.train_set.T_nan * (1 / self.N)) / self.train_set.T, self.N)
+        if phi is not None:
+            self.phi *= phi / np.sum(phi)
+        self.upsilon = np.repeat(np.sum(self.train_set.T_0) / self.train_set.T, self.N)
+        if upsilon is not None:
+            self.upsilon *= upsilon / np.sum(upsilon)
 
     def dump(self, fp):
         """Save the trained model to a .pickle file."""
@@ -321,15 +451,15 @@ class GMMHMM:
                          "sigma: \n{}\n"
                          "phi: \n{}\n"
                          "upsilon: \n{}\n"
-                         "P(States|y): \n{}\n"
-                         "\n".format(self.pi,
-                                     self.A,
-                                     self.w,
-                                     self.mu,
-                                     self.sigma,
-                                     self.phi,
-                                     self.upsilon,
-                                     p_st))
+                         "P(states|y): \n{}\n"
+                         "\n".format(repr(self.pi),
+                                     repr(self.A),
+                                     repr(self.w),
+                                     repr(self.mu),
+                                     repr(self.sigma),
+                                     repr(self.phi),
+                                     repr(self.upsilon),
+                                     repr(p_st)))
 
         # Plot the current fit
         if fp_fit is not None:
@@ -439,15 +569,15 @@ class GMMHMM:
         sigma_bkp = None
         w_bkp = None
 
-        if NO_GMM:
+        if GLOBALS["no_gmm"]:
             # Store a copy of the GMM parameters that will NOT be updated
             mu_bkp = deepcopy(self.mu)
             sigma_bkp = deepcopy(self.sigma)
             w_bkp = deepcopy(self.w)
 
         # Matrices/vectors holding parameter values across the entire dataset
-        self.phi = np.zeros(self.N, dtype=DTYPES["p"])
-        self.upsilon = np.zeros(self.N, dtype=DTYPES["p"])
+        self.phi = np.zeros(self.N, dtype=GLOBALS["dtypes"]["p"])
+        self.upsilon = np.zeros(self.N, dtype=GLOBALS["dtypes"]["p"])
         phi_upsilon_norm = 0.0
         self.A = np.tile(0.0, (self.N, self.N))
         A_norm = np.tile(0.0, (self.N, self.N))
@@ -456,7 +586,7 @@ class GMMHMM:
         mu_sigma_norm = np.tile(0.0, (self.N, self.K))
         self.w = np.tile(0.0, (self.N, self.K))
         w_norm = np.tile(0.0, (self.N, self.K))
-        self.pi = np.zeros(self.N, dtype=DTYPES["p"])
+        self.pi = np.zeros(self.N, dtype=GLOBALS["dtypes"]["p"])
         pi_norm = 0.0
         self.gmm_gamma = np.tile(np.nan, (self.N, self.train_set.n_rna))
 
@@ -503,7 +633,7 @@ class GMMHMM:
         self.pi /= pi_norm
         self.gmm_gamma = np.sum(self.gmm_gamma, axis=1) / np.sum(self.gmm_gamma, axis=(0, 1))
 
-        if NO_GMM:
+        if GLOBALS["no_gmm"]:
             # Reinstate the GMM parameters saved prior to the EM step
             self.mu = mu_bkp
             self.sigma = sigma_bkp
@@ -555,9 +685,9 @@ class GMMHMM:
         self.spawn_children()
 
         # Print initial fit
-        plot_dir = os.path.join(OUTPUT, OUTPUT_NAME["training"], "")
+        plot_dir = os.path.join(GLOBALS["output"], GLOBALS["output_name"]["training"], "")
         misclib.make_dir(plot_dir)
-        self.take_snapshot(stdout=VERBOSE,
+        self.take_snapshot(stdout=GLOBALS["verbose"],
                            fp_fit=os.path.join(plot_dir, "iter_{0:03d}.svg".format(self.iter_cnt)))
 
         # Iteration across the EM algorithm until convergence or maximum iterations
@@ -577,12 +707,12 @@ class GMMHMM:
             # Log the current model's log likelihood
             logger.info("iter #{} : logL {}".format(self.iter_cnt, np.round(curr_logL, 2)))
 
-            self.take_snapshot(stdout=VERBOSE,
+            self.take_snapshot(stdout=GLOBALS["verbose"],
                                fp_fit=os.path.join(plot_dir, "iter_{0:03d}.svg".format(self.iter_cnt)))
 
         # Check if the likelihood converged
         if not did_converge:
-            logger.warning("patteRNA did not converge within {} iterations.\n"
+            logger.warning("patteRNA did not converge within {} iterations. Try increasing --maxiter.\n"
                            "Last 5 logL -> {}".format(max_iter,
                                                       np.round(self.logL[-5:], 2)))
 
@@ -606,7 +736,6 @@ class GMMHMM_SingleObs:
             sigma (np.array): Variance of the Gaussian components.
             name (str): RNA name.
             obs (np.array): Vector of observations.
-            original_obs (np.array): Vector of observations before transformations.
             seq (np.array): RNA sequence.
             mask_nan (np.array): Mask for NaNs.
             mask_0 (np.array): Mask for 0s.
@@ -645,7 +774,6 @@ class GMMHMM_SingleObs:
         # New attributes
         self.name = None
         self.obs = None
-        self.original_obs = None
         self.seq = None
         self.mask_nan = None
         self.mask_0 = None
@@ -684,7 +812,7 @@ class GMMHMM_SingleObs:
 
         """
 
-        self.B_mixture = np.zeros([self.N, self.T, self.K], dtype=DTYPES["p"])
+        self.B_mixture = np.zeros([self.N, self.T, self.K], dtype=GLOBALS["dtypes"]["p"])
 
         for i in self.states:
             for m in range(self.K):
@@ -697,13 +825,13 @@ class GMMHMM_SingleObs:
                 self.B_mixture[i, :, m] = r
 
             # Add NaNs and Zeros probabilities
-            if NAN:
+            if GLOBALS["nan"]:
                 self.B_mixture[i, self.mask_nan, :] = self.phi[i] * self.w[i, :]
             else:
                 # Assumes that NaNs represent "no information" - i.e. uniform distribution across states
                 self.B_mixture[i, self.mask_nan, :] = (1 / self.N) * self.w[i, :]
 
-            if PARS:
+            if GLOBALS["pars"]:
                 # if this is a PARS dataset then 0 means "no information" - i.e. uniform distribution across states
                 self.B_mixture[i, self.mask_0, :] = (1 / self.N) * self.w[i, :]
             else:
@@ -728,8 +856,8 @@ class GMMHMM_SingleObs:
         """
 
         # Forward pass
-        self.alpha = np.zeros(self.B.shape, dtype=DTYPES["p"])
-        self.c = np.zeros(self.T, dtype=DTYPES["p"])
+        self.alpha = np.zeros(self.B.shape, dtype=GLOBALS["dtypes"]["p"])
+        self.c = np.zeros(self.T, dtype=GLOBALS["dtypes"]["p"])
         self.logL = 0
 
         for t in range(self.T):
@@ -743,7 +871,7 @@ class GMMHMM_SingleObs:
             self.logL += -np.log(self.c[t])
 
         # Backward pass
-        self.beta = np.zeros(self.B.shape, dtype=DTYPES["p"])
+        self.beta = np.zeros(self.B.shape, dtype=GLOBALS["dtypes"]["p"])
         self.beta[:, -1] = 1
 
         # noinspection PyTypeChecker
@@ -766,15 +894,15 @@ class GMMHMM_SingleObs:
         """
 
         # Compute joint event probabilities - Xi
-        xi = np.zeros([self.N, self.N, self.T - 1], dtype=DTYPES["p"])
+        xi = np.zeros([self.N, self.N, self.T - 1], dtype=GLOBALS["dtypes"]["p"])
         for t in range(self.T - 1):
             for i in self.states:
                 for j in self.states:
                     xi[i, j, t] = self.alpha[i, t] * self.A[i, j] * self.B[j, t + 1] * self.beta[j, t + 1]
 
         # Compute state posteriors - Gamma (and gammas for each Gaussian component)
-        gamma_mix_sum = np.zeros([self.N, self.T], dtype=DTYPES["p"])
-        gamma = np.zeros([self.N, self.K, self.T], dtype=DTYPES["p"])
+        gamma_mix_sum = np.zeros([self.N, self.T], dtype=GLOBALS["dtypes"]["p"])
+        gamma = np.zeros([self.N, self.K, self.T], dtype=GLOBALS["dtypes"]["p"])
 
         for i in self.states:
             for t in range(self.T):
@@ -850,12 +978,12 @@ class GMMHMM_SingleObs:
         A = elog(self.A)
         B = elog(self.B)
 
-        trellis = np.zeros(self.B.shape, dtype=DTYPES["p"])
-        backpt = np.ones(self.B.shape, dtype=DTYPES["path"]) * -1  # Back pointer
+        trellis = np.zeros(self.B.shape, dtype=GLOBALS["dtypes"]["p"])
+        backpt = np.ones(self.B.shape, dtype=GLOBALS["dtypes"]["path"]) * -1  # Back pointer
 
-        self.viterbi_path = {"path": np.zeros(self.T, dtype=DTYPES["path"]),
-                             "log_p": np.zeros(self.T, dtype=DTYPES["p"]),
-                             "p": np.zeros(self.T, dtype=DTYPES["p"])}
+        self.viterbi_path = {"path": np.zeros(self.T, dtype=GLOBALS["dtypes"]["path"]),
+                             "log_p": np.zeros(self.T, dtype=GLOBALS["dtypes"]["p"]),
+                             "p": np.zeros(self.T, dtype=GLOBALS["dtypes"]["p"])}
 
         # t = 0
         trellis[:, 0] = pi + B[:, 0]
@@ -935,27 +1063,22 @@ class GMMHMM_SingleObs:
         return score
 
 
-def global_config(n_tasks, verbose, seq_constraints, output, no_gmm, pars, nan_flag):
-    """Configure GLOBAL parameters."""
+def global_config(**kwargs):
+    """Set GLOBALS parameters."""
+    global GLOBALS
 
-    # System config
-    n_available_cpus = multiprocessing.cpu_count()  # Number of CPUs in the system
-    global N_TASKS
-    N_TASKS = n_available_cpus if n_tasks <= 0 else n_tasks  # Ensure a non negative number of CPUs
-    global VERBOSE
-    VERBOSE = verbose
-    global SEQ_CONSTRAINTS
-    SEQ_CONSTRAINTS = seq_constraints
-    global OUTPUT
-    OUTPUT = output
-    global NO_GMM
-    NO_GMM = no_gmm
-    global PARS
-    PARS = pars
-    global NAN
-    NAN = nan_flag
+    # Iterate across other input sys configs
+    if kwargs is not None:
+        for key, value in kwargs.items():
 
-    logger.info("Running patteRNA using {} parallel processes.".format(N_TASKS))
+            if key == "n_tasks":
+                n_available_cpus = multiprocessing.cpu_count()  # Number of CPUs in the system
+                # Ensure a non negative number of CPUs
+                GLOBALS["n_tasks"] = n_available_cpus if kwargs["n_tasks"] <= 0 else kwargs["n_tasks"]
+            else:
+                GLOBALS[key] = value
+
+    logger.info("Running patteRNA using {} parallel processes.".format(GLOBALS["n_tasks"]))
 
 
 def elog(x):
@@ -971,7 +1094,7 @@ def elog(x):
 
     """
 
-    x = np.array(x, dtype=DTYPES["p"])
+    x = np.array(x, dtype=GLOBALS["dtypes"]["p"])
 
     if x.size == 1:
         if x <= 0:
@@ -989,20 +1112,25 @@ def elog(x):
 
 def path_repo2scores(fp, rna, path_repo):
     """Score all paths in a repository and write to output"""
+    out_txts = []
+
+    for curr_path in path_repo:
+        score = rna.score_path(curr_path)
+
+        path_iv = range(curr_path["start"], curr_path["end"])
+        path = [str(i) for i in curr_path["path"][path_iv]]
+        out_txts.append("{} {:d} {:d} {:.3g} {} {} {}\n".format(rna.name,
+                                                                curr_path["start"],
+                                                                curr_path["end"],
+                                                                score,
+                                                                curr_path["dot"],
+                                                                "".join(path),
+                                                                "".join(np.array(list(rna.seq))[path_iv])))
+
     LOCK.acquire()
     with open(fp, "a") as f:
-        for curr_path in path_repo:
-            score = rna.score_path(curr_path)
-
-            path_iv = range(curr_path["start"], curr_path["end"])
-            path = [str(i) for i in curr_path["path"][path_iv]]
-
-            f.write("{} {:d} {:d} {:.3g} {} {}\n".format(rna.name,
-                                                         curr_path["start"],
-                                                         curr_path["end"],
-                                                         score,
-                                                         "".join(path),
-                                                         "".join(np.array(list(rna.seq))[path_iv])))
+        for out_txt in out_txts:
+            f.write(out_txt)
     LOCK.release()
 
 
@@ -1010,12 +1138,13 @@ def write_score_header(fp):
     """Write the output scoring file header."""
 
     with open(fp, "w") as f:
-        header = "{} {} {} {} {} {}\n".format("transcript",
-                                              "start",
-                                              "end",
-                                              "score",
-                                              "path",
-                                              "seq")
+        header = "{} {} {} {} {} {} {}\n".format("transcript",
+                                                 "start",
+                                                 "end",
+                                                 "score",
+                                                 "dot-bracket",
+                                                 "path",
+                                                 "seq")
         f.write(header)
 
 
@@ -1045,7 +1174,7 @@ def wnormpdf(x, mean=0, var=1, w=1, w_min=0):
         w = 0
     else:
         # noinspection PyTypeChecker
-        u = np.array((x - mean) / stdev, dtype=DTYPES["p"])
+        u = np.array((x - mean) / stdev, dtype=GLOBALS["dtypes"]["p"])
         y = np.exp(-u * u / 2) / (np.sqrt(2 * np.pi) * stdev)
         # noinspection PyTypeChecker
         if np.any(y == 0):
@@ -1060,8 +1189,8 @@ def wnormpdf(x, mean=0, var=1, w=1, w_min=0):
 
 def pool_init():
     """Initialize a pool for multiprocesses with a embedded lock."""
-    pool = multiprocessing.Pool(processes=N_TASKS,
-                                maxtasksperchild=MAXTASKPERCHILD)
+    pool = multiprocessing.Pool(processes=GLOBALS["n_tasks"],
+                                maxtasksperchild=GLOBALS["maxtasksperchild"])
     return pool
 
 
@@ -1112,7 +1241,7 @@ def pattern_scorer(rna, fp, patterns):
             # Ensure we are still within the RNA length
             if nuc_stop <= rna.T:
                 # Filter for patterns allowed by the RNA sequence if sequence constraint was used
-                if SEQ_CONSTRAINTS:
+                if GLOBALS["seq_constraints"]:
                     if pattern.ensure_pairing(seq=seq[nuc_start:nuc_stop]):
                         pattern_flag = True
                 else:
@@ -1125,13 +1254,83 @@ def pattern_scorer(rna, fp, patterns):
                     path[nuc_start:nuc_stop] = pattern.path
                     path_repo.append({"start": nuc_start,
                                       "end": nuc_stop,
-                                      "path": path})
+                                      "path": path,
+                                      "dot": pattern.dot})
 
         # Realize all possible paths (can be empty) - Writing this after each patterns to avoid memory leaks
         path_repo2scores(fp, rna, path_repo)
         path_repo = []  # Flush the path repository
 
     return None
+
+
+# noinspection PyPep8Naming
+def hmm_counter(N, reference_set):
+    """HMM counter. Returns initial and transition probabilities for a set of RNAs that contains reference
+    pairing state sequences.
+
+    Args:
+        N (int): Number of Hidden states
+        reference_set (RNAset): Set of RNAs with known reference pairing state sequences
+
+    Returns:
+        pi (np.array): Initial probabilities
+        A (np.array): Transition probabilities
+
+    """
+
+    pi = np.repeat(0.0, N)
+    pi_norm = 0
+    A = np.tile(0.0, (N, N))
+    A_norm = np.repeat(0, N)
+
+    for rna in reference_set.rnas:
+        ref_dot = rna.ref_dot
+        j = None
+
+        for i in ref_dot:
+            if j is None:
+                # Initial probs
+                pi[i] += 1
+                pi_norm += 1
+            else:
+                # Transitions
+                A[i, j] += 1
+                A_norm[i] += 1
+
+            j = i
+
+    pi /= pi_norm
+    A /= A_norm[:, np.newaxis]
+
+    return pi, A
+
+
+def scikit_gmm_fit(x, k):
+    """Fit a GMM with k components on a vector of observation x using the scikit-learn implementation.
+
+    Args:
+        x (np.array): Array of observations (can contain missing values)
+        k (int): Number of Gaussian components
+
+    Returns:
+        mu (np.array): Components means
+        sigma (np.array): Components variances
+        w (np.array): Components weights
+        aic (float): Aikaike information criterion
+
+    """
+
+    # Filter NaNs out
+    x = x[~np.isnan(x)]
+
+    if len(x.shape) == 1:
+        x = x.reshape(-1, 1)  # This is required by scikit-learn
+
+    gmm = GaussianMixture(n_components=k, covariance_type="spherical", init_params="random")
+    gmm.fit(x)
+
+    return gmm.means_, gmm.covariances_, gmm.weights_, gmm.aic(x)
 
 
 if __name__ == '__main__':

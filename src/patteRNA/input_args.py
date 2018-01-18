@@ -1,8 +1,11 @@
 """Parse and handle input arguments"""
 
 import argparse
+import os
 import yaml
 import numpy as np
+
+from . import globalbaz
 
 
 def parse_cl_args(inputargs):
@@ -12,13 +15,16 @@ def parse_cl_args(inputargs):
                                      description="Rapid mining of RNA secondary structure motifs from profiling data.",
                                      epilog="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--version',
-                        action='version',
-                        version='%(prog)s 1.0.0')
+    parser.add_argument("--version",
+                        action="version",
+                        version="%(prog)s 1.1.0")
     parser.add_argument("input",
                         metavar="probing",
                         type=str,
-                        help="FASTA-like file of probing data")
+                        help="FASTA-like file of probing data. The type of assay is automatically detected based on "
+                             "the filename extension. Extensions currently supported are [.shape, .pars, .dms]. "
+                             "See Github page at https://github.com/AviranLab/patteRNA/docs/supported_extensions.md"
+                             " for more information.")
     parser.add_argument("output",
                         metavar="output",
                         type=str,
@@ -28,15 +34,18 @@ def parse_cl_args(inputargs):
                         default=None,
                         type=str,
                         help="FASTA file of RNA sequences")
+    parser.add_argument("--reference",
+                        metavar="",
+                        default=None,
+                        type=str,
+                        # help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.",
+                        help=argparse.SUPPRESS)  # NOT SUPPORTED YET
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="Print progress")
     parser.add_argument("-l", "--log",
                         action="store_true",
                         help="Log transform input data")
-    parser.add_argument("--PARS",
-                        action="store_true",
-                        help="Use this flag for PARS experiments")
     parser.add_argument("--config",
                         metavar="",
                         type=str,
@@ -45,10 +54,12 @@ def parse_cl_args(inputargs):
     parser.add_argument("-k",
                         metavar="",
                         type=int,
-                        default=10,
-                        help="Number of Gaussian components per pairing state in the GMM model. Increasing this "
-                             "will make a tighter fit on the data but could also result on overfitting. Fitted data "
-                             "can and should be visually inspected after training to gauge if the model is adequate")
+                        default=-1,
+                        help="Number of Gaussian components per pairing state in the GMM model. By default, K is "
+                             "determined automatically using Aikaike Information Criteria. If K <= 0, automatic "
+                             "detection is enabled. Increasing K manually will make the model fit the data tighter but "
+                             "could result on overfitting. Fitted data should always be visually inspected after "
+                             "training to gauge if the model is adequate")
     parser.add_argument("-n",
                         metavar="",
                         type=int,
@@ -85,18 +96,44 @@ def parse_cl_args(inputargs):
                         metavar="",
                         type=str,
                         default=None,
-                        help="Pattern of the target structural motif in the extended dot-bracket notation. Paired and "
-                             "unpaired nucleotides are represented by parentheses '()' and dots '.', respectively. A "
-                             "stretch of consecutive characters is declared using the format <char>{<from>, <to>}. "
-                             "For example, use .{2,4} to declare 2 to 4 consecutive repeats of unpaired nucleotides "
-                             "in the pattern.")
+                        # help="Pattern of the target motif in the extended dot-bracket notation. Paired and "
+                        #      "unpaired nucleotides are represented by parentheses '()' and dots '.', respectively. A "
+                        #      "stretch of consecutive characters is declared using the format <char>{<from>, <to>}. "
+                        #      "For example, use .{2,4} to declare 2 to 4 consecutive repeats of unpaired nucleotides "
+                        #      "in the pattern.",
+                        help=argparse.SUPPRESS)  # LEGACY
     parser.add_argument("-s", "--seq",
                         action="store_true",
-                        help="Use sequence constraints when searching for motifs")
+                        # help="Use sequence constraints when searching for motifs",
+                        help=argparse.SUPPRESS)  # LEGACY
+    parser.add_argument("--motif",
+                        metavar="",
+                        type=str,
+                        default=None,
+                        help="Score target motif declared using the extended dot-bracket notation. Paired and unpaired "
+                             "bases are denoted using parentheses '()' and dots '.', respectively. A stretch of "
+                             "consecutive characters is declared using the format <char>{<from>, <to>}. Can be used in "
+                             "conjunction with --mask to modify the expected underlying sequence of pairing states.")
+    parser.add_argument("--GQ",
+                        metavar="",
+                        type=str,
+                        default=None,
+                        # help="Score G-quadruplexes. GQ are declared by passing a string of format "
+                        #      "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
+                        #      "number of quartets in the GQ and loops the spacing between G-columns.",
+                        help=argparse.SUPPRESS)  # NOT SUPPORTED YET
+    parser.add_argument("--path",
+                        metavar="",
+                        type=str,
+                        default=None,
+                        help="Expected sequence of numerical pairing states for the motif with 0=unpaired and 1=paired "
+                             "nucleotides. A stretch of consecutive states is declared using the format "
+                             "<state>{<from>, <to>}. Can be used in conjunction with --motif to apply sequence "
+                             "constraints.")
     parser.add_argument("--forbid-N-pairs",
                         action="store_true",
-                        help="Pairs involving a N are considered invalid (must be used in conjunction with -s/--seq "
-                             "to take effect")
+                        help="Pairs involving a N are considered invalid. Must be used in conjunction with either "
+                             "--motif or --GQ to take effect")
     parser.add_argument("--gammas",
                         action="store_true",
                         help="Output the posterior probabilities of pairing states (i.e. the probability Trellis)")
@@ -111,7 +148,7 @@ def parse_cl_args(inputargs):
                         # help="Drop Gaussian mixture components below this weight."
                         #      "Note that if this value is set too high then all components "
                         #      "will be dropped resulting in a error."
-                        help=argparse.SUPPRESS)
+                        help=argparse.SUPPRESS)  # OBSOLETE
     parser.add_argument("--filter-test",
                         action="store_true",
                         help="Apply the density filter used for the training to the test set as well. Not recommended "
@@ -126,12 +163,10 @@ def parse_cl_args(inputargs):
                              "automation using scripts or for running patteRNA on computing servers")
     parser.add_argument("--nogmm",
                         action="store_true",
-                        help="Learn only HMM parameters but do not train the GMM. This should only be used if the "
-                             "full GMM (i.e. means, sigmas and weights) is known and is configured using the YAML "
-                             "config file (see option --config)")
-    parser.add_argument("--debug",
-                        action="store_true",
-                        help=argparse.SUPPRESS)
+                        # help="Learn only HMM parameters but do not train the GMM. This should only be used if the "
+                        #      "full GMM (i.e. means, sigmas and weights) is known and is configured using the YAML "
+                        #      "config file (see option --config)",
+                        help=argparse.SUPPRESS)  # DEVS ONLY
 
     args = parser.parse_args(inputargs)  # Parse input args
 
@@ -143,7 +178,7 @@ def parse_cl_args(inputargs):
 
 def parse_config_yaml(fp):
     to_array = ["pi", "phi", "upsilon", "A", "mu", "sigma", "w"]
-    possible_scientific = ["epsilon", "maxpnan", "wmin"]
+    possible_scientific = ["epsilon", "min_density", "wmin"]
 
     # Read input params
     file_args = {}
@@ -203,6 +238,27 @@ def summarize_config(args):
     text += hline
 
     return text
+
+
+def check_obs_extensions(files):
+    """Check that extensions of observation filenames are supported and determine type of experimental assays.
+
+    Args:
+        files (list): List of filenames
+
+    """
+
+    accepted_files = []
+    assay_types = []
+
+    for file in files:
+        file = file.strip()
+        _, file_extension = os.path.splitext(file)
+        if file_extension in globalbaz.GLOBALS["extensions"].keys():
+            accepted_files.append(file)
+            assay_types.append(globalbaz.GLOBALS["extensions"][file_extension])
+
+    return accepted_files, assay_types
 
 
 if __name__ == '__main__':

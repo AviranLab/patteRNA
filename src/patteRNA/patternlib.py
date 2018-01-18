@@ -2,28 +2,50 @@ import numpy as np
 import exrex
 import regex
 import itertools
+import logging
+import sys
 
 from . import globalbaz
 
-PAIRING_TABLE = globalbaz.PAIRING_TABLE
-DTYPES = globalbaz.DTYPES
+# Initialize logger
+logger = logging.getLogger(__name__)
+
+PAIRING_TABLE = globalbaz.GLOBALS["pairing_table"]  # Set the default pairing table
 
 
 # CANONICAL STRUCTURAL MOTIFS
 class Pattern:
-    def __init__(self, dot):
+    def __init__(self, dot, path_str):
         """Initialize attributes."""
         self.dot = dot
-        self.path = dot2states(dot)
-        self.n = len(dot)
+        self.path = np.array(list(path_str), dtype=globalbaz.GLOBALS["dtypes"]["path"])
+
+        if self.dot is None:
+            self.n = len(self.path)
+            self.dot = "-" * self.n
+        else:
+            self.n = len(self.dot)
+
+        if len(self.dot) != len(self.path):
+            logger.error("--motif and --path are incompatible.")
+            sys.exit()
 
         # Get some characteristics of the pattern
-        dot = np.array(list(dot))
+        dot = np.array(list(self.dot))
         self.left_partner = np.where(dot == "(")[0]
         self.right_partner = np.where(dot == ")")[0][::-1]  # Invert right partner
         self.n_left = len(self.left_partner)
         self.n_right = len(self.right_partner)
         self.is_symmetrical = self.n_left == self.n_right
+
+    def valid_dot(self):
+        """Ensure dot strings are valid."""
+
+        valid = False
+        if self.dot.count("(") == self.dot.count(")"):
+            valid = True
+
+        return valid
 
     def ensure_pairing(self, seq):
         """Ensures that the structure given by the dot-bracket can form based on the underlying sequence.
@@ -49,50 +71,87 @@ class Pattern:
         return pairing_ensured
 
 
-def pattern_builder(pattern_regex, seq_constraints, forbid_N_pairs):
-    """Generate all possible state sequences given a dot-bracket pattern RegEx."""
+def parse_motif(args):
+    """Parse the input --motif and --path option simultaneously"""
+
+    motifs = pattern_builder(motif_regex=args.motif,
+                             path_regex=args.path,
+                             forbid_N_pairs=args.forbid_N_pairs)
+
+    return motifs
+
+
+def parse_GQ(args):
+    """Parse the input --GQ option"""
+
+    motifs = args.GQ.split("[")[1].replace("]", "").split(",")
+    motifs = [int(i) for i in motifs]
+
+    return motifs
+
+
+# noinspection PyPep8Naming
+def pattern_builder(motif_regex=None, path_regex=None, seq_constraints=False, forbid_N_pairs=False):
+    """Generate all possible state sequences given a dot-bracket pattern RegEx.
+
+    Args:
+        motif_regex (str): Input motif dot-bracket regex
+        path_regex (str): Path regex applied as mask to input motif_regex
+        seq_constraints (bool): Apply sequence constraints? (LEGACY)
+        forbid_N_pairs (bool): Are N-N paired considered invalid?
+
+    """
+    global PAIRING_TABLE
 
     # Check if we consider N-N base pairings invalid and switch to the proper pairing table
     if forbid_N_pairs:
-        global PAIRING_TABLE
-        PAIRING_TABLE = globalbaz.PAIRING_TABLE_NO_N
+        PAIRING_TABLE = globalbaz.GLOBALS["pairing_table_no_N"]
+
+    dots = None
+    if motif_regex is not None:
+        dots = dot_regex2substrings(motif_regex)
+
+    paths = None
+    if path_regex is not None:
+        paths = path_regex2substrings(path_regex)
+
+    putative_patterns = []
+    if (dots is not None) and (paths is not None):
+        for dot, path in zip(dots, paths):
+            putative_patterns.append(Pattern(dot=dot, path_str=path))
+    elif dots is not None:
+        for dot in dots:
+            putative_patterns.append(Pattern(dot=dot, path_str=dot2states(dot, as_string=True)))
+    elif paths is not None:
+        for path in paths:
+            putative_patterns.append(Pattern(dot=None, path_str=path))
 
     patterns = []
-    dots = dot_regex2substrings(pattern_regex, seq_constraints)
-    for dot in dots:
-        # Encode the dot-bracket to a numerical state sequence
-        patterns.append(Pattern(dot))
+    if seq_constraints or (motif_regex is not None):
+        for pattern in putative_patterns:
+            if pattern.valid_dot():
+                patterns.append(pattern)
+    else:
+        patterns = putative_patterns
 
     return patterns
 
 
-def dot_regex2substrings(pattern, seq_constraints):
-    """Generate all possible dot-bracket based on a pattern.
-
-    Args:
-        pattern (str): Regex for the motif
-        seq_constraints (str): Apply sequence constraints in the future?
-
-    Returns:
-        dots (list): All possible substrings based on the pattern
-
-    """
+def dot_regex2substrings(regex_in):
+    """Generate all possible dot-bracket based on a motif regex"""
 
     # add character literals
-    pattern = pattern.replace("(", "\(")
-    pattern = pattern.replace(")", "\)")
-    pattern = pattern.replace(".", "\.")
+    regex_in = regex_in.replace("(", "\(")
+    regex_in = regex_in.replace(")", "\)")
+    regex_in = regex_in.replace(".", "\.")
 
-    dots = []
-    for dot in list(exrex.generate(pattern)):
-        if seq_constraints:
-            # generate all possible VALID dot-bracket structures
-            if dot.count("(") == dot.count(")"):
-                dots.append(dot)
-        else:
-            dots.append(dot)
+    return list(exrex.generate(regex_in))
 
-    return dots
+
+def path_regex2substrings(regex_in):
+    """Generate all possible paths based on a path regex."""
+
+    return list(exrex.generate(regex_in))
 
 
 # G-QUADRUPLEXES
@@ -115,6 +174,7 @@ def g_quadruplex_finder(seq, min_quartet, max_quartet, min_loop, max_loop):
 
     """
 
+    # noinspection PyPep8Naming
     T = len(seq)
     quad_repo = []  # Initialize the repository of G-quadruplexes
 
@@ -179,22 +239,32 @@ def g_quadruplex_finder(seq, min_quartet, max_quartet, min_loop, max_loop):
                             prev_ix = ix[j]
 
                         # Add this path to the repository
+                        end = prev_ix + nG
                         quad_repo.append({"start": start,
-                                          "end": prev_ix + nG,
-                                          "path": np.array(path, dtype=DTYPES["path"])})
+                                          "end": end,
+                                          "path": np.array(path, dtype=globalbaz.GLOBALS["dtypes"]["path"]),
+                                          "dot": "-" * (end-start)})
 
     return quad_repo
 
 
 # GENERAL
-def dot2states(dot):
+def dot2states(dot, as_string=False):
     """Translate a dot-bracket string in a sequence of numerical states"""
 
     dot = dot.replace(".", "0")  # Unpaired
     dot = dot.replace("(", "1")  # Paired
     dot = dot.replace(")", "1")  # Paired
+    dot = dot.replace(">", "1")  # Paired (ct2dot symbols)
+    dot = dot.replace("<", "1")  # Paired (ct2dot symbols)
+    dot = dot.replace("{", "1")  # Paired (ct2dot symbols)
+    dot = dot.replace("}", "1")  # Paired (ct2dot symbols)
 
-    dotl = np.array(list(dot), dtype=DTYPES["path"])
+    if as_string:
+        dotl = dot
+    else:
+        dotl = np.array(list(dot), dtype=globalbaz.GLOBALS["dtypes"]["path"])
+
     return dotl
 
 

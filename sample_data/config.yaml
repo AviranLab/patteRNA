@@ -20,9 +20,6 @@ verbose: False
 # Number of CPUs to use
 n_tasks: -1
 
-# Are those PARS data?
-PARS: False
-
 # Should NaN be considered informative?
 NAN: False
 
@@ -96,17 +93,17 @@ w: [[1, 1],
 # Path to a trained model
 model: None
 
-# Motifs that will be searched.
-pattern: None
+# Motifs in dot-bracket notation
+motif: None
+
+# Expected sequence of numerical pairing states
+path: None
 
 # Output state posterior probabilities?
 gammas: False
 
 # Output the most likely state path given the data for each transcript
 viterbi: False
-
-# Use sequence constraints when searching for motifs?
-seq: False
 
 # Consider pairs involving a N invalid
 forbid_N_pairs: False
