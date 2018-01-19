@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ### Removed
 - Removed parameter for final state probabilities `rho` (obsolete).
+- Removed `-wmin` as it is now obsolete.
 - Removed `--PARS` CLI flag as file extensions are used to determine the assay (obsolete).
 - Removed `--debug` CLI flag (obsolete).
 

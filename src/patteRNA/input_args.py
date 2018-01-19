@@ -38,7 +38,8 @@ def parse_cl_args(inputargs):
                         metavar="",
                         default=None,
                         type=str,
-                        help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.")
+                        # help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.",
+                        help=argparse.SUPPRESS)  # NOT SUPPORTED
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="Print progress")
@@ -117,9 +118,10 @@ def parse_cl_args(inputargs):
                         metavar="",
                         type=str,
                         default=None,
-                        help="Score G-quadruplexes. GQ are declared by passing a string of format "
-                             "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
-                             "number of quartets in the GQ and loops the spacing between G-columns.")
+                        # help="Score G-quadruplexes. GQ are declared by passing a string of format "
+                        #      "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
+                        #      "number of quartets in the GQ and loops the spacing between G-columns.",
+                             help=argparse.SUPPRESS)  # NOT SUPPORTED
     parser.add_argument("--path",
                         metavar="",
                         type=str,
