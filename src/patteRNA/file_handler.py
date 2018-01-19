@@ -103,7 +103,7 @@ def read_reference_structures(fp):
 
 
 def read_path(fp):
-    """Read a .path or .viterbi file."""
+    """Read a .path or viterbi.txt file."""
 
     rnas = {}
 
@@ -115,8 +115,8 @@ def read_path(fp):
     return rnas
 
 
-def read_gammas(fp):
-    """Read a .gammas file."""
+def read_posteriors(fp):
+    """Read a posteriors.txt file."""
 
     rnas = {}
     with open(fp, "r") as f:
@@ -206,7 +206,7 @@ def check_overwrites(args, switch):
             if os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["model"])):
                 overwrite_files = True
 
-        if args.gammas and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["gammas"])):
+        if args.posteriors and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["posteriors"])):
             overwrite_files = True
         if args.viterbi and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["viterbi"])):
             overwrite_files = True

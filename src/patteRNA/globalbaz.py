@@ -22,9 +22,9 @@ GLOBALS["extensions"] = {".shape": "shape",
                          ".dms": "shape"}
 
 # Output file names
-GLOBALS["output_name"] = {"scores": "score.txt",
-                          "unsorted_scores": "unsorted_score.txt",
-                          "gammas": "gammas.txt",
+GLOBALS["output_name"] = {"scores": "scores.txt",
+                          "unsorted_scores": "unsorted_scores.txt",
+                          "posteriors": "posteriors.txt",
                           "viterbi": "viterbi.txt",
                           "training": "iterative_learning",
                           "model": "trained_model.pickle",

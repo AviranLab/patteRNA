@@ -25,6 +25,12 @@ python3 -V
 
 This command should print the current installed version of Python3. If it did, fast-forward to [Installation](#installation). If it failed, install Python3 for you OS from the [official Python website](https://www.python.org/downloads/) and retry the previous command to ensure installation was completed.
 
+The installation also requires to have the latest versions of `pip` and `setuptools`, which you can install by running the command:
+
+```
+sudo python3 -m pip install -U pip setuptools
+```
+
 ### Installation
 
 You can install patteRNA directly from source. First, download the distribution tarball by entering the command:
@@ -117,7 +123,7 @@ For standard motifs, we use an extended dot-bracket notation where stretches of 
 In conjunction, or as an alternative, to motifs, an expected sequence of numerical pairing state can be used via the flag `--path`, with 0 and 1 representing unpaired and paired nucleotides, respectively. Similar to [`--motif`](#motifs), short form notation can be used for stretches of identical pairing states, e.g. `1111000001111` can be denoted `1{4}0{5}1{4}`. Curly brackets can also be used to indicate stretches of varying length using the convention `{<from>,<to>}`. If `--path` is used in conjunction to `--motif`, then it is used as a mask on top of the declared motif. This can be useful when it is known that specific nucleotides do not behave under the expected model, for example a single nucleotide being paired based on the dot-bracket notation but that generates SP data consistent with should be an unpaired nucleotide.
 
 #### Output
-Scored motifs are available in the file `score.txt` in the output directory. This file contains the following columns:
+Scored motifs are available in the file `scores.txt` in the output directory. This file contains the following columns:
 
 - Transcript name
 - Motif start position (uses a 0-based encoding)
@@ -132,7 +138,7 @@ Scored motifs are available in the file `score.txt` in the output directory. Thi
 patteRNA can return the most likely sequence of pairing states across an entire transcript, called the Viterbi path, using the `--viterbi` flag. This will create a FASTA-like file called `viterbi.txt` in the output directory, with numerical pairing states encoded as 0/1 for unpaired/paired bases, respectively.
 
 #### Posterior probabilities
-The posterior probabilities of pairing states at each nucleotides can be requested using the flag `--gammas`. This will output a FASTA-like file called `gammas.txt` where the first and second lines (after the header) correspond to unpaired and paired probabilities, respectively.
+The posterior probabilities of pairing states at each nucleotides can be requested using the flag `--posteriors`. This will output a FASTA-like file called `posteriors.txt` where the first and second lines (after the header) correspond to unpaired and paired probabilities, respectively.
 
 ### Examples <a name="examples"></a>
 Note that in the examples provided below we use the same probing data file for both training and scoring. However, one can train the model and score motifs using two different files (e.g. to use a defined set of transcripts for training).
@@ -166,7 +172,7 @@ Note that in the examples provided below we use the same probing data file for b
 * Request the Viterbi path and the Posterior state probabilities using a trained model:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --viterbi --gammas
+    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --viterbi --posteriors
     ```
 
 ### Using a config file

@@ -33,6 +33,10 @@ debug: False
 
 ######## TRAINING PARAMETERS ########
 
+# Path to a FASTA-like file containing reference secondary structures in dot-bracket notation for supervised
+# initialization of model's parameters
+reference: None
+
 # Convergence criterion
 epsilon: 1e-4
 
@@ -99,8 +103,11 @@ motif: None
 # Expected sequence of numerical pairing states
 path: None
 
+# Search for G-quadruplexes
+GQ: None
+
 # Output state posterior probabilities?
-gammas: False
+posteriors: False
 
 # Output the most likely state path given the data for each transcript
 viterbi: False

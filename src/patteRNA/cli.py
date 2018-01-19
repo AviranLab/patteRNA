@@ -85,8 +85,8 @@ def main(testcmd=None):
     if args.model is None:
         switch["do_training"] = True
 
-    # Check if gammas and viterbi options are switched on
-    if args.gammas | args.viterbi:
+    # Check if posteriors and viterbi options are switched on
+    if args.posteriors | args.viterbi:
         switch["do_scoring"] = True
 
     # Check option compatibility
@@ -204,6 +204,7 @@ def main(testcmd=None):
         hmm.load(args.model)
 
     # Scoring phase (if required by the user)
+    fp_out_unsorted = None
     if switch["do_scoring"]:
         start_time = misclib.timer_start()
 
@@ -227,7 +228,6 @@ def main(testcmd=None):
                                             stochastic=False)
 
         # Check if motifs are requested
-        fp_out_unsorted = None
         if switch["do_scan"]:
             # Initialize pointers to the output score file
             fp_out_unsorted = os.path.join(args.output, GLOBALS["output_name"]["unsorted_scores"])
@@ -239,10 +239,10 @@ def main(testcmd=None):
         else:
             fp_viterbi = None
 
-        if args.gammas:
-            fp_gammas = os.path.join(args.output, GLOBALS["output_name"]["gammas"])
+        if args.posteriors:
+            fp_posteriors = os.path.join(args.output, GLOBALS["output_name"]["posteriors"])
         else:
-            fp_gammas = None
+            fp_posteriors = None
 
         # Initialize a progress bar and iterate over batches
         pbar = tqdm.tqdm(total=n_test, mininterval=1, disable=not args.verbose, leave=False)
@@ -260,7 +260,7 @@ def main(testcmd=None):
                       fp_score=fp_out_unsorted,
                       is_GQ=switch["is_gquad"],
                       fp_viterbi=fp_viterbi,
-                      fp_gammas=fp_gammas)
+                      fp_posteriors=fp_posteriors)
 
             pbar.update(n_batch)
             logger.debug("Computing scores... {}/{}".format(iter_cnt, n_test))

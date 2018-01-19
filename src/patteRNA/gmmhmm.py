@@ -113,7 +113,7 @@ class GMMHMM:
 
         self.train_set.rnas = None  # Garbage collection
 
-    def score(self, rnas, patterns, fp_score, is_GQ, fp_viterbi, fp_gammas):
+    def score(self, rnas, patterns, fp_score, is_GQ, fp_viterbi, fp_posteriors):
         """Scoring phase. Parallelized with respect to RNAs.
 
         Args:
@@ -122,7 +122,7 @@ class GMMHMM:
             fp_score (str): Output score file
             is_GQ (bool): Are we scoring G-quadruplexes?
             fp_viterbi (str): If set then decode the Viterbi path and output to this file
-            fp_gammas (str): If set then compute hidden state posteriors (gammas) and output to this file
+            fp_posteriors (str): If set then compute hidden state posteriors (gammas) and output to this file
         """
 
         # Set NaNs to current values of the last EM-step (i.e. no re-initialization of phi)
@@ -150,7 +150,7 @@ class GMMHMM:
                                    fp_score=fp_score,
                                    is_GQ=is_GQ,
                                    fp_viterbi=fp_viterbi,
-                                   fp_gammas=fp_gammas)
+                                   fp_posteriors=fp_posteriors)
 
         try:
             q = pool.imap_unordered(worker, self.test_children)
@@ -164,7 +164,7 @@ class GMMHMM:
             pass
 
     @staticmethod
-    def score_worker(rna, patterns, fp_score, is_GQ, fp_viterbi, fp_gammas):
+    def score_worker(rna, patterns, fp_score, is_GQ, fp_viterbi, fp_posteriors):
         """Parallelized worker for the score function."""
 
         rna.get_b()  # Build emissions for this RNA
@@ -194,7 +194,7 @@ class GMMHMM:
                 f.write(">{}\n{}\n".format(rna.name, path))
             LOCK.release()
 
-        if fp_gammas is not None:
+        if fp_posteriors is not None:
             _, _, gamma_mix_sum = rna.E_step()  # Estimation step to get state posterior probabilities
             gamma_mix_sum /= np.sum(gamma_mix_sum, axis=0)[np.newaxis, :]
 
@@ -203,7 +203,7 @@ class GMMHMM:
                 out_txt += "{}\n".format(" ".join(["{:.3g}".format(g) for g in gamma_mix_sum[i, :]]))
 
             LOCK.acquire()
-            with open(fp_gammas, "a") as f:
+            with open(fp_posteriors, "a") as f:
                 f.write(">{}\n{}".format(rna.name, out_txt))
             LOCK.release()
 

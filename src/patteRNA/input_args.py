@@ -38,8 +38,7 @@ def parse_cl_args(inputargs):
                         metavar="",
                         default=None,
                         type=str,
-                        # help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.",
-                        help=argparse.SUPPRESS)  # NOT SUPPORTED YET
+                        help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.")
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="Print progress")
@@ -118,10 +117,9 @@ def parse_cl_args(inputargs):
                         metavar="",
                         type=str,
                         default=None,
-                        # help="Score G-quadruplexes. GQ are declared by passing a string of format "
-                        #      "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
-                        #      "number of quartets in the GQ and loops the spacing between G-columns.",
-                        help=argparse.SUPPRESS)  # NOT SUPPORTED YET
+                        help="Score G-quadruplexes. GQ are declared by passing a string of format "
+                             "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
+                             "number of quartets in the GQ and loops the spacing between G-columns.")
     parser.add_argument("--path",
                         metavar="",
                         type=str,
@@ -134,7 +132,7 @@ def parse_cl_args(inputargs):
                         action="store_true",
                         help="Pairs involving a N are considered invalid. Must be used in conjunction with either "
                              "--motif or --GQ to take effect")
-    parser.add_argument("--gammas",
+    parser.add_argument("--posteriors",
                         action="store_true",
                         help="Output the posterior probabilities of pairing states (i.e. the probability Trellis)")
     parser.add_argument("--viterbi",
@@ -166,7 +164,7 @@ def parse_cl_args(inputargs):
                         # help="Learn only HMM parameters but do not train the GMM. This should only be used if the "
                         #      "full GMM (i.e. means, sigmas and weights) is known and is configured using the YAML "
                         #      "config file (see option --config)",
-                        help=argparse.SUPPRESS)  # DEVS ONLY
+                        help=argparse.SUPPRESS)  # DEVS
 
     args = parser.parse_args(inputargs)  # Parse input args
 
