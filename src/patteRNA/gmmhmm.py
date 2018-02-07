@@ -129,10 +129,6 @@ class GMMHMM:
         global GLOBALS
         GLOBALS["nan"] = True
 
-        # Write the score file header if needed
-        if patterns is not None:
-            write_score_header(fp_score)
-
         # Spawn a GMMHMM_SingleObs object for each RNA
         self.test_children = []
         ix = 0

@@ -236,6 +236,9 @@ def main(testcmd=None):
             fp_out_unsorted = os.path.join(args.output, GLOBALS["output_name"]["unsorted_scores"])
             fp_out = os.path.join(args.output, GLOBALS["output_name"]["scores"])
 
+            # Write the header
+            gmmhmm.write_score_header(fp_out_unsorted)
+
         # Initialize pointers to output files
         if args.viterbi:
             fp_viterbi = os.path.join(args.output, GLOBALS["output_name"]["viterbi"])

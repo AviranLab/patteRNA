@@ -17,7 +17,7 @@ def parse_cl_args(inputargs):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version",
                         action="version",
-                        version="%(prog)s 1.1.1")
+                        version="%(prog)s 1.1.2")
     parser.add_argument("input",
                         metavar="probing",
                         type=str,
