@@ -169,7 +169,8 @@ def main(testcmd=None):
             logger.error("No training data left after filtering, try decreasing --min-density.")
             sys.exit()
 
-        train_set.compute_stats()
+        train_set.build_continuous_obs()
+        train_set.build_histogram()
 
         # Import the data
         hmm.import_data(train_set=train_set)
@@ -182,6 +183,8 @@ def main(testcmd=None):
             logger.info("Optimal K is {} ... done in {}".format(args.k, misclib.timer_stop(start_time)))
 
         # Initialize the model
+        train_set.compute_stats(args.k)
+        train_set.continuous_obs = None  # Garbage collection
         logger.info("Training ...")
         start_time = misclib.timer_start()
 

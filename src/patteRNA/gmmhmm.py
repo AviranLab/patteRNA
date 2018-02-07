@@ -288,7 +288,8 @@ class GMMHMM:
             # Unsupervised initialization
             # HMM
             self.pi = np.repeat(1 / self.N, self.N) if pi is None else pi
-            self.A = np.tile(1 / self.N, (self.N, self.N)) if A is None else A
+            self.A = np.array([[0.71020019,  0.28979981],
+                               [0.19677996,  0.80322004]]) if A is None else A
 
             # GMM
             self.unsupervised_GMM_init(mu=mu, sigma=sigma, w=w, w_min=w_min, phi=phi, upsilon=upsilon)
@@ -381,21 +382,9 @@ class GMMHMM:
 
         if mu is None:
             if GLOBALS["pars"]:  # As PARS > 0 indicates pairing, we need to initialize the Gaussian means accordingly
-                self.mu = np.array([misclib.rand_sample(self.K,
-                                                        min_=self.train_set.min_obs,
-                                                        max_=0),
-                                    misclib.rand_sample(self.K,
-                                                        min_=0,
-                                                        max_=self.train_set.max_obs)],
-                                   dtype=GLOBALS["dtypes"]["obs"])
+                self.mu = np.array(self.train_set.percentile_obs, dtype=GLOBALS["dtypes"]["obs"])
             else:
-                self.mu = np.array([misclib.rand_sample(self.K,
-                                                        min_=self.train_set.median_obs,
-                                                        max_=self.train_set.max_obs),
-                                    misclib.rand_sample(self.K,
-                                                        min_=self.train_set.min_obs,
-                                                        max_=self.train_set.median_obs)],
-                                   dtype=GLOBALS["dtypes"]["obs"])
+                self.mu = np.array(np.flip(self.train_set.percentile_obs, 0), dtype=GLOBALS["dtypes"]["obs"])
         else:
             self.mu = mu
         self.sigma = np.tile(self.train_set.stdev_obs, (self.N, self.K)) if sigma is None else sigma

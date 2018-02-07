@@ -39,11 +39,13 @@ class RNAset:
         T_nan (int): Cumulative length of all missing observations.
         T_0 (int): Cumulative length of all zeros observations.
         max_T (int): Length of the longest RNA.
+        continuous_obs (np.array): Concatenated continuous observations.
         min_obs (float): Minimum value of the continuous observations.
         max_obs (float): Maximum value of the continuous observations.
         mean_obs (float): Average of the continuous observations.
         median_obs (float): Median of the continuous observations.
         stdev_obs (float): Standard deviation of the continuous observations.
+        percentile_obs (np.array): Percentiles to anchor the GMM means.
         histogram (dict): Contains the continuous data histogram bins and densities. Used for plotting.
 
     """
@@ -57,11 +59,13 @@ class RNAset:
         self.T_nan = 0
         self.T_0 = 0
         self.max_T = 0
+        self.continuous_obs = None
         self.min_obs = None
         self.max_obs = None
         self.mean_obs = None
         self.median_obs = None
         self.stdev_obs = None
+        self.percentile_obs = None
         self.histogram = None
 
     def add_rna(self, rna):
@@ -86,23 +90,32 @@ class RNAset:
         self.T_0 += rna.T_0  # Increment the number of zeros observed probing values
         self.max_T = rna.T if rna.T > self.max_T else self.max_T  # Update the longest RNA if needed
 
-    def compute_stats(self):
-        """Compute some basic statistics for the set."""
-        continuous_obs = []
+    def build_continuous_obs(self):
+        self.continuous_obs = []
 
         for rna in self.rnas:
-            continuous_obs += list(rna.obs[~rna.mask_nan & ~rna.mask_0])  # Append observed probing values to a list
+            self.continuous_obs += list(rna.obs[~rna.mask_nan & ~rna.mask_0])
+
+        self.continuous_obs = np.array(self.continuous_obs)
+
+    # noinspection PyPep8Naming
+    def compute_stats(self, K):
+        """Compute some basic statistics for the set."""
 
         # Compute basic stats
-        self.min_obs = np.min(continuous_obs)
-        self.max_obs = np.max(continuous_obs)
-        # self.mean_obs = np.mean(continuous_obs)
-        self.median_obs = np.median(continuous_obs)
-        self.stdev_obs = np.std(continuous_obs)
+        self.min_obs = np.min(self.continuous_obs)
+        self.max_obs = np.max(self.continuous_obs)
+        # self.mean_obs = np.mean(self.continuous_obs)
+        self.median_obs = np.median(self.continuous_obs)
+        self.stdev_obs = np.std(self.continuous_obs)
+        percentile_anchors = np.arange(0, 1, (1/(K*2+1)))[1:] * 100
+        self.percentile_obs = np.percentile(self.continuous_obs, percentile_anchors).reshape(2, -1)
+
+    def build_histogram(self):
 
         # Build histogram bins for future plotting
         self.histogram = dict()
-        self.histogram["dens"], self.histogram["bins"] = np.histogram(continuous_obs,
+        self.histogram["dens"], self.histogram["bins"] = np.histogram(self.continuous_obs,
                                                                       bins="auto", normed=True)
         self.histogram["n"] = len(self.histogram["bins"])
 
