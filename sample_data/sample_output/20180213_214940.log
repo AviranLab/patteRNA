@@ -1,4 +1,4 @@
-2018-02-07 14:02 - DEBUG - cli : 103 - 
+2018-02-13 21:49 - DEBUG - cli : 103 - 
 =========================================================
 Running pattern mining with the following parameters:
 =========================================================
@@ -37,15 +37,15 @@ viterbi: True
 w: None
 wmin: 0
 =========================================================
-2018-02-07 14:02 - INFO - cli : 107 - Target motif -> ((((...))))
-2018-02-07 14:02 - INFO - gmmhmm : 1066 - Running patteRNA using 4 parallel processes.
-2018-02-07 14:02 - INFO - cli : 126 - Loading input data ...
-2018-02-07 14:02 - INFO - cli : 153 - Loading ... done in 00:00:00
-2018-02-07 14:02 - INFO - cli : 155 - Transcript #: Initial 21 | Train 21
-2018-02-07 14:02 - INFO - cli : 180 - Finding an optimal K ...
-2018-02-07 14:02 - INFO - cli : 183 - Optimal K is 2 ... done in 00:00:00
-2018-02-07 14:02 - INFO - cli : 188 - Training ...
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - cli : 107 - Target motif -> ((((...))))
+2018-02-13 21:49 - INFO - gmmhmm : 1066 - Running patteRNA using 4 parallel processes.
+2018-02-13 21:49 - INFO - cli : 126 - Loading input data ...
+2018-02-13 21:49 - INFO - cli : 153 - Loading ... done in 00:00:00
+2018-02-13 21:49 - INFO - cli : 155 - Transcript #: Initial 21 | Train 21
+2018-02-13 21:49 - INFO - cli : 180 - Finding an optimal K ...
+2018-02-13 21:49 - INFO - cli : 183 - Optimal K is 2 ... done in 00:00:00
+2018-02-13 21:49 - INFO - cli : 188 - Training ...
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.5,  0.5])
 A: 
@@ -58,8 +58,8 @@ mu:
 array([[-1.02821839, -0.222519  ],
        [-2.7640779 , -1.83415771]], dtype=float32)
 sigma: 
-array([[ 1.47913718,  1.47913718],
-       [ 1.47913718,  1.47913718]], dtype=float32)
+array([[ 1.4791373,  1.4791373],
+       [ 1.4791373,  1.4791373]], dtype=float32)
 phi: 
 array([ 0.01783681,  0.01783681])
 upsilon: 
@@ -68,8 +68,8 @@ P(states|y):
 array([ 0.5,  0.5])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #1 : logL -19723.68
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #1 : logL -19723.68
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.55438496,  0.44561504])
 A: 
@@ -92,8 +92,8 @@ P(states|y):
 array([ 0.45902518,  0.54097482])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #2 : logL -19353.49
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #2 : logL -19353.49
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.55948424,  0.44051576])
 A: 
@@ -116,8 +116,8 @@ P(states|y):
 array([ 0.47614147,  0.52385853])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #3 : logL -18973.67
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #3 : logL -18973.67
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.54383159,  0.45616841])
 A: 
@@ -140,8 +140,8 @@ P(states|y):
 array([ 0.47403581,  0.52596419])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #4 : logL -18809.17
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #4 : logL -18809.17
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.52620331,  0.47379669])
 A: 
@@ -164,8 +164,8 @@ P(states|y):
 array([ 0.46735552,  0.53264448])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #5 : logL -18742.66
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #5 : logL -18742.66
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.51230688,  0.48769312])
 A: 
@@ -188,8 +188,8 @@ P(states|y):
 array([ 0.46115091,  0.53884909])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #6 : logL -18710.84
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #6 : logL -18710.84
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.50276514,  0.49723486])
 A: 
@@ -212,8 +212,8 @@ P(states|y):
 array([ 0.45648891,  0.54351109])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #7 : logL -18693.98
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #7 : logL -18693.98
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49682524,  0.50317476])
 A: 
@@ -236,8 +236,8 @@ P(states|y):
 array([ 0.45322317,  0.54677683])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #8 : logL -18684.43
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #8 : logL -18684.43
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49341345,  0.50658655])
 A: 
@@ -260,8 +260,8 @@ P(states|y):
 array([ 0.45096712,  0.54903288])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #9 : logL -18678.57
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #9 : logL -18678.57
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49160474,  0.50839526])
 A: 
@@ -284,8 +284,8 @@ P(states|y):
 array([ 0.44938565,  0.55061435])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #10 : logL -18674.63
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #10 : logL -18674.63
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49074239,  0.50925761])
 A: 
@@ -308,8 +308,8 @@ P(states|y):
 array([ 0.44824212,  0.55175788])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #11 : logL -18671.74
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #11 : logL -18671.74
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49040664,  0.50959336])
 A: 
@@ -332,8 +332,8 @@ P(states|y):
 array([ 0.44738136,  0.55261864])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #12 : logL -18669.49
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #12 : logL -18669.49
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49034687,  0.50965313])
 A: 
@@ -356,8 +356,8 @@ P(states|y):
 array([ 0.44670439,  0.55329561])
 
 
-2018-02-07 14:02 - INFO - gmmhmm : 693 - iter #13 : logL -18667.63
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - INFO - gmmhmm : 693 - iter #13 : logL -18667.63
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49042113,  0.50957887])
 A: 
@@ -380,7 +380,7 @@ P(states|y):
 array([ 0.44614878,  0.55385122])
 
 
-2018-02-07 14:02 - DEBUG - gmmhmm : 447 - 
+2018-02-13 21:49 - DEBUG - gmmhmm : 447 - 
 pi: 
 array([ 0.49042113,  0.50957887])
 A: 
@@ -403,13 +403,13 @@ P(states|y):
 array([ 0.44614878,  0.55385122])
 
 
-2018-02-07 14:02 - INFO - cli : 203 - Training ... done in 00:00:11
-2018-02-07 14:02 - INFO - cli : 215 - Building the scoring set ...
-2018-02-07 14:02 - INFO - cli : 225 - Building the scoring set ... done
-2018-02-07 14:02 - INFO - cli : 226 - Computing scores for 21 transcripts ...
-2018-02-07 14:02 - DEBUG - cli : 272 - Computing scores... 0/21
-2018-02-07 14:02 - INFO - cli : 276 - Computing scores... done in 00:00:01
-2018-02-07 14:02 - INFO - cli : 280 - Sorting scores...
-2018-02-07 14:02 - INFO - cli : 282 - Sorting scores... done
-2018-02-07 14:02 - INFO - cli : 284 - Process terminated in 00:00:13
-2018-02-07 14:02 - INFO - cli : 285 - Output written to -> sample_data/sample_output
+2018-02-13 21:49 - INFO - cli : 203 - Training ... done in 00:00:12
+2018-02-13 21:49 - INFO - cli : 215 - Building the scoring set ...
+2018-02-13 21:49 - INFO - cli : 225 - Building the scoring set ... done
+2018-02-13 21:49 - INFO - cli : 226 - Computing scores for 21 transcripts ...
+2018-02-13 21:49 - DEBUG - cli : 272 - Computing scores... 0/21
+2018-02-13 21:49 - INFO - cli : 276 - Computing scores... done in 00:00:01
+2018-02-13 21:49 - INFO - cli : 280 - Sorting scores...
+2018-02-13 21:49 - INFO - cli : 282 - Sorting scores... done
+2018-02-13 21:49 - INFO - cli : 284 - Process terminated in 00:00:13
+2018-02-13 21:49 - INFO - cli : 285 - Output written to -> sample_data/sample_output

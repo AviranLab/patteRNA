@@ -196,6 +196,8 @@ def check_overwrites(args, switch):
 
     # Check that no file overwriting will occur
     overwrite_files = False
+    delete_viterbi = False
+    delete_posteriors = False
     delete_training = False
 
     if os.path.isdir(args.output):  # Output directory already exist
@@ -207,8 +209,10 @@ def check_overwrites(args, switch):
                 overwrite_files = True
 
         if args.posteriors and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["posteriors"])):
+            delete_posteriors = True
             overwrite_files = True
         if args.viterbi and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["viterbi"])):
+            delete_viterbi = True
             overwrite_files = True
         if switch["do_scan"] and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["scores"])):
             overwrite_files = True
@@ -225,6 +229,10 @@ def check_overwrites(args, switch):
             if response in GLOBALS["user_prompt"]["yes"]:
                 if delete_training:
                     shutil.rmtree(os.path.join(args.output, GLOBALS["output_name"]["training"]), ignore_errors=False)
+                if delete_posteriors:
+                    os.remove(os.path.join(args.output, GLOBALS["output_name"]["posteriors"]))
+                if delete_viterbi:
+                    os.remove(os.path.join(args.output, GLOBALS["output_name"]["viterbi"]))
                 break
             elif response in GLOBALS["user_prompt"]["no"]:
                 sys.exit()

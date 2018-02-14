@@ -4,6 +4,11 @@ All notable changes to patteRNA are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- ## Unreleased -->
+## [1.1.3] - 2018-02-13
+### Fixed
+- Bugfix. Output Viterbi and posterior files were not deleted if already existing. [ML]
+
+
 ## [1.1.2] - 2018-02-06
 ### Changed
 - Unsupervised initialization now uses by default an initial transition probability matrix derived from the Weeks set and GMM means based on data percentiles for increased robustness. [ML]
