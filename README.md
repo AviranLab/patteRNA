@@ -17,15 +17,15 @@ These instructions will get you a copy of patteRNA up and running on your local 
 
 ### Prerequisites
 
-The only prerequisite for patteRNA is Python v3 which does not always come pre-packaged with operating systems. To check if Python3 is installed on your system run the following command:
+The only prerequisite for patteRNA is Python 3. To check if Python3 is installed on your system run the following command:
 
 ```
 python3 -V
 ```
 
-This command should print the current installed version of Python3. If it did, fast-forward to [Installation](#installation). If it failed, install Python3 for you OS from the [official Python website](https://www.python.org/downloads/) and retry the previous command to ensure installation was completed.
+This command should print the current installed version of Python3. If it failed, install Python3 for you OS from the [official Python website](https://www.python.org/downloads/).
 
-The installation also requires to have the latest versions of `pip` and `setuptools`, which you can install by running the command:
+The installation also requires the latest versions of `pip` and `setuptools`, which can be install by typing:
 
 ```
 sudo python3 -m pip install -U pip setuptools
@@ -52,7 +52,7 @@ Run the installation by entering the command:
 sudo python3 setup.py install
 ```
 
-You should now be able to call patteRNA as an executable from anywhere.
+You should now be able to call patteRNA as an executable from anywhere. If it failed, make sure `pip` and `setuptools` are updated, see [Prerequisites](#prerequisites)
 
 > For more advanced users, the use of a virtual python environment is recommended (see [venv](https://docs.python.org/3/library/venv.html#module-venv) and [pyenv](https://github.com/pyenv/pyenv)). By default, the binary is created in the `bin` folder of the active python distribution. To change this behavior, use the command `python3 setup.py install --install-script=<DEST>` where `<DEST>` is the destination folder. If you do this, don't forget to add `<DEST>` to your `$PATH` variable so the binary is discoverable by the OS.
 
@@ -79,25 +79,90 @@ This will run patteRNA in verbose mode (`-v`) and create an output directory `du
 ### General usage and available options
 
 ```
-patteRNA <INPUT> <OUTPUT> <OPTIONS>
+patteRNA <probing> <output> <OPTIONS>
 ```
 
-All available options are listed and described in the help output accessed by running the command:
+All available options are accessible via `patteRNA -h` as listed below. Recommendations (when applicable) are given in the option caption. Note that switches, i.e. boolean options that do not need arguments, have defaults set to `False`.
 
 ```
-patteRNA -h
-```
+mandatory arguments:
+  probing              FASTA-like file of probing data. The type of assay is
+                       automatically detected based on the filename extension.
+                       Extensions currently supported are [.shape, .pars,
+                       .dms].
+  output               Output directory
 
-Recommendations (when applicable) are given in the option caption. Note that switches, i.e. boolean options that do not need arguments, have defaults set to `False`.
+optional arguments:
+  -h, --help           show this help message and exit
+  --version            show program's version number and exit
+  -f , --fasta         FASTA file of RNA sequences (default: None)
+  -v, --verbose        Print progress (default: False)
+  -l, --log            Log transform input data (default: False)
+  --config             Config parameters in YAML format. Has priority over CLI
+                       options (default: None)
+  -k                   Number of Gaussian components per pairing state in the
+                       GMM model. By default, K is determined automatically
+                       using Aikaike Information Criteria. If K <= 0,
+                       automatic detection is enabled. Increasing K manually
+                       will make the model fit the data tighter but could
+                       result in overfitting. Fitted data should always be
+                       visually inspected after training to gauge if the model
+                       is adequate (default: -1)
+  -n                   Number of transcripts used for training. We recommend
+                       using about 500 to 1000 transcripts for large datasets.
+                       Transcripts are randomly selected if n is lower than
+                       the total number of available transcripts. If n is
+                       negative, all transcripts are used (default: -1)
+  -d , --min-density   Minimum data density allowed in each transcript used
+                       for training. (default: 0.5)
+  -e , --epsilon       Convergence criterion (default: 0.0001)
+  -i , --maxiter       Maximum number of training iterations (default: 100)
+  -nt , --n-tasks      Number of parallel processes. By default all available
+                       CPUs are used (default: -1)
+  --model              Trained .pickle GMMHMM model (default: None)
+  --motif              Score target motif declared using an extended dot-
+                       bracket notation. Paired and unpaired bases are denoted
+                       using parentheses '()' and dots '.', respectively. A
+                       stretch of consecutive characters is declared using the
+                       format <char>{<from>, <to>}. Can be used in conjunction
+                       with --mask to modify the expected underlying sequence
+                       of pairing states. (default: None)
+  --path               Expected sequence of numerical pairing states for the
+                       motif with 0=unpaired and 1=paired nucleotides. A
+                       stretch of consecutive states is declared using the
+                       format <state>{<from>, <to>}. Can be used in
+                       conjunction with --motif to apply sequence constraints.
+                       (default: None)
+  --forbid-N-pairs     Pairs involving a N are considered invalid. Must be
+                       used in conjunction with either --motif to take
+                       effect (default: False)
+  --posteriors         Output the posterior probabilities of pairing states
+                       (i.e. the probability Trellis) (default: False)
+  --viterbi            Output the most likely sequence of pairing states for
+                       entire transcripts (i.e. Viterbi paths) (default:
+                       False)
+  --filter-test        Apply the density filter (--min-density) used for the
+                       training to the test set as well. Not recommended as
+                       regions with sparse profiling data will tend to score
+                       generally poorly (default: False)
+  --NAN                If NaN are considered informative in term of pairing
+                       state, use this flag. However, note that this can lead
+                       to unstable results and is therefore not recommended
+                       (default: False)
+  --no-prompt          Do not prompt a question if existing output files could
+                       be overwritten. Useful for automation using scripts or
+                       for running patteRNA on computing servers (default:
+                       False)
+```
 
 ### Inputs
-patteRNA uses a FASTA-like convention to parse input probing data. As patteRNA learns from data, non-normalized data can be used directly. Also, patteRNA fully supports negatives and zero values, even when applying a log-transformation to the data (via the `-l` flag). We recommend to **not** artificially set negative values to 0. Non available values must be set to `NA` or `nan` and not `-999`. See this [example file](sample_data/weeks_set.shape).
+patteRNA uses a FASTA-like convention for probing data (see this [example file](sample_data/weeks_set.shape)). As patteRNA learns from data, non-normalized data can be used directly. Also, patteRNA fully supports negatives and zero values, even when applying a log-transformation to the data (via the `-l` flag). We recommend to **not** artificially set negative values to 0. Also, non available values must be set to `NA` or `nan` and **not to `-999`**.
 
-The type of experimental assay is automatically detected using the `<INPUT>` filename extension. Currently supported extensions are listed [here](docs/supported_extensions.md).
+The type of experimental assay is automatically detected using the `<probing>` filename extension. Currently supported extensions are listed [here](docs/supported_extensions.md).
 
 ### Training a model on a new dataset
 
-When using a new dataset, patteRNA needs to learn its model from the data. Training is performed using an iterative EM algorithm that stops when the convergence criterion is met. Run an example training phase using the command:
+By default, patteRNA will learn its model from the data. Run an example training phase using the command:
 
 ```
 patteRNA sample_data/weeks_set.shape dummy_test -vl
@@ -113,7 +178,7 @@ This command will generate an output folder `dummy_test` in the current director
 - A plot of the model's log-likelihood convergence: `logL.svg`
 - A folder `iterative_learning/` that contains plots of the fitted data at each training iteration.
 
-### Scoring structural motifs
+### Scoring motifs
 patteRNA currently supports structural motifs (via [`--motif`](#motifs) or [`--path`](#paths)) that contain no gaps. These options can be used in conjunction with training to perform both training and scoring using a single command. However, we recommend to train patteRNA first and use the trained model in subsequent searches for motifs. The trained model is saved in `trained_model.pickle` and can be loaded using the flag `--model`.
 
 #### Motifs <a name="motifs"></a>
@@ -141,7 +206,6 @@ patteRNA can return the most likely sequence of pairing states across an entire 
 The posterior probabilities of pairing states at each nucleotides can be requested using the flag `--posteriors`. This will output a FASTA-like file called `posteriors.txt` where the first and second lines (after the header) correspond to unpaired and paired probabilities, respectively.
 
 ### Examples <a name="examples"></a>
-Note that in the examples provided below we use the same probing data file for both training and scoring. However, one can train the model and score motifs using two different files (e.g. to use a defined set of transcripts for training).
 
 * Train the model and search for any loop of length 5:
 
@@ -175,6 +239,8 @@ Note that in the examples provided below we use the same probing data file for b
     patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --viterbi --posteriors
     ```
 
+> Note that in the examples provided above we use the same probing data file for both training and scoring. However, one can train the model and score motifs using two different files (e.g. to use a defined set of transcripts for training).
+
 ### Using a config file
 
 Because we strongly believe in automation and replicable processes, all options can be passed to patteRNA via the flag `--config` and a configuration file written in YAML. The config file contains more options compared to CLI options. Most notably, all initial values of models' parameters can be controlled via the config file. Note that options passed to patteRNA via the config file have priority over CLI options. An example config file with all options currently available is provided [here](sample_data/config.yaml).
@@ -183,7 +249,7 @@ Because we strongly believe in automation and replicable processes, all options 
 
 ## Citation
 
-TBA
+Ledda M. and Aviran S. (2018) “PATTERNA: Transcriptome-Wide Search for Functional RNA Elements via Structural Data Signatures.” *Genome Biology* 19 (1). https://doi.org/10.1186/s13059-018-1399-z.
 
 
 
