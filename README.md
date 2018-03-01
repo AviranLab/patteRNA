@@ -249,7 +249,7 @@ Because we strongly believe in automation and replicable processes, all options 
 
 ## Citation
 
-Ledda M. and Aviran S. (2018) “PATTERNA: Transcriptome-Wide Search for Functional RNA Elements via Structural Data Signatures.” *Genome Biology* 19 (1). https://doi.org/10.1186/s13059-018-1399-z.
+Ledda M. and Aviran S. (2018) “PATTERNA: Transcriptome-Wide Search for Functional RNA Elements via Structural Data Signatures.” *Genome Biology* 19(28). https://doi.org/10.1186/s13059-018-1399-z.
 
 
 
