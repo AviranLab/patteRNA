@@ -17,15 +17,9 @@ These instructions will get you a copy of patteRNA up and running on your local 
 
 ### Prerequisites
 
-The only prerequisite for patteRNA is Python 3. To check if Python3 is installed on your system run the following command:
+**Python3**. To get the current installed version on your system, run `python3 -V`. If the command failed or if your version is anterior to v3.5, install the latest version of Python3 for your OS from the [official Python website](https://www.python.org/downloads/).
 
-```
-python3 -V
-```
-
-This command should print the current installed version of Python3. If it failed, install Python3 for you OS from the [official Python website](https://www.python.org/downloads/).
-
-The installation also requires the latest versions of `pip` and `setuptools`, which can be install by typing:
+You also need the latest versions of `pip` and `setuptools`, which can be installed by typing:
 
 ```
 sudo python3 -m pip install -U pip setuptools
@@ -52,7 +46,7 @@ Run the installation by entering the command:
 sudo python3 setup.py install
 ```
 
-You should now be able to call patteRNA as an executable from anywhere. If it failed, make sure `pip` and `setuptools` are updated, see [Prerequisites](#prerequisites)
+You should now be able to call patteRNA as an executable from anywhere. If it failed, make sure `pip` and `setuptools` are up-to-date, see [Prerequisites](#prerequisites)
 
 > For more advanced users, the use of a virtual python environment is recommended (see [venv](https://docs.python.org/3/library/venv.html#module-venv) and [pyenv](https://github.com/pyenv/pyenv)). By default, the binary is created in the `bin` folder of the active python distribution. To change this behavior, use the command `python3 setup.py install --install-script=<DEST>` where `<DEST>` is the destination folder. If you do this, don't forget to add `<DEST>` to your `$PATH` variable so the binary is discoverable by the OS.
 
