@@ -16,3 +16,5 @@ src/patteRNA.egg-info/
 tests/
 htmlcov/
 analytics/
+sphinx/
+
