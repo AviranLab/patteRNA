@@ -204,13 +204,13 @@ The posterior probabilities of pairing states at each nucleotides can be request
 * Train the model and search for any loop of length 5:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --motif ".{5}"
+    patteRNA sample_data/weeks_set.shape dummy_test -vl --motif ".{5}" -f sample_data/weeks_set.fa
     ```
 
 * Search for all loops of length 5 using a trained model:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --motif ".{5}"
+    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --motif ".{5}" -f sample_data/weeks_set.fa
     ```
 
 * Search for all enclosed loops (i.e. neighbored by paired nucleotides, but constrained to be paired together) of length 5 using a trained model:
