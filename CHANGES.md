@@ -4,6 +4,11 @@ All notable changes to patteRNA are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- ## Unreleased -->
+
+## [1.1.4] - 2018-02-13
+### Fixed
+- Bugfix. Sequence constraints contained a bug affecting non fully nested target motifs. [PR]
+
 ## [1.1.3] - 2018-02-13
 ### Fixed
 - Bugfix. Output Viterbi and posterior files were not deleted if already existing. [ML]

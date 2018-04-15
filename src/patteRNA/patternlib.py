@@ -37,6 +37,7 @@ class Pattern:
         self.n_left = len(self.left_partner)
         self.n_right = len(self.right_partner)
         self.is_symmetrical = self.n_left == self.n_right
+        self.pairing_table = self.compute_pairing_table()
 
     def valid_dot(self):
         """Ensure dot strings are valid."""
@@ -59,16 +60,71 @@ class Pattern:
 
         pairing_ensured = True
 
-        if self.is_symmetrical:
-            seq = list(seq)  # string to list
-            for ix in range(self.n_left):
-                if not seq[self.right_partner[ix]] in PAIRING_TABLE[seq[self.left_partner[ix]]]:
-                    pairing_ensured = False
-                    break
-        else:
-            pairing_ensured = False
+        for i in range(len(self.pairing_table[0])):
+            if not seq[self.pairing_table[0][i]] in PAIRING_TABLE[seq[self.pairing_table[1][i]]]:
+                pairing_ensured = False
+                break
+
+        # pairing_ensured = True
+        #
+        # if self.is_symmetrical:
+        #     seq = list(seq)  # string to list
+        #     for ix in range(self.n_left):
+        #         if not seq[self.right_partner[ix]] in PAIRING_TABLE[seq[self.left_partner[ix]]]:
+        #             pairing_ensured = False
+        #             break
+        # else:
+        #     pairing_ensured = False
 
         return pairing_ensured
+
+    def compute_pairing_table(self):
+
+        table = [[], []]
+
+        n = self.n_left
+
+        dot_init = str(self.dot)
+        working_dot = dot_init
+
+        if self.valid_dot():
+
+            while not len(table[0]) == n:
+
+                open_bracket = 0
+
+                for s, i in zip(working_dot, range(len(dot_init))):
+
+                    if s == "(":
+
+                        open_bracket = 1
+
+                        for si, j in zip(working_dot[i+1:], range(len(working_dot[i+1:]))):
+
+                            if si == "(":
+                                open_bracket += 1
+                                continue
+                            if si == ")":
+                                open_bracket -= 1
+
+                            if si == ".":
+                                continue
+
+                            if open_bracket == 0:
+
+                                open_index = i
+                                close_index = i+j+1
+
+                                table[0].append(open_index)
+                                table[1].append(close_index)
+
+                                working_dot = working_dot[:open_index] + \
+                                              'C' + working_dot[open_index+1:close_index] + \
+                                              'C' + working_dot[close_index+1:]
+                                break
+                        break
+
+        return table
 
 
 def parse_motif(args):
