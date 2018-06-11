@@ -90,25 +90,33 @@ optional arguments:
   -h, --help           show this help message and exit
   --version            show program's version number and exit
   -f , --fasta         FASTA file of RNA sequences (default: None)
+  --reference          FASTA-like file of reference RNA secondary structures
+                       in dot-bracket notation. (default: None)
   -v, --verbose        Print progress (default: False)
   -l, --log            Log transform input data (default: False)
+  --no-cscores         Do not compute c-scores during scoring (default: False)
   --config             Config parameters in YAML format. Has priority over CLI
                        options (default: None)
   -k                   Number of Gaussian components per pairing state in the
                        GMM model. By default, K is determined automatically
-                       using Aikaike Information Criteria. If K <= 0,
+                       using Bayesian Information Criteria. If K <= 0,
                        automatic detection is enabled. Increasing K manually
                        will make the model fit the data tighter but could
                        result in overfitting. Fitted data should always be
                        visually inspected after training to gauge if the model
                        is adequate (default: -1)
-  -n                   Number of transcripts used for training. We recommend
-                       using about 500 to 1000 transcripts for large datasets.
-                       Transcripts are randomly selected if n is lower than
-                       the total number of available transcripts. If n is
-                       negative, all transcripts are used (default: -1)
-  -d , --min-density   Minimum data density allowed in each transcript used
-                       for training. (default: 0.5)
+  -d , --min-density   Transcripts with data density below this threshold will
+                       be rejected from analysis. Valid range is 0 to 1. For
+                       example, 0.5 means that only transcripts containing
+                       less than 50% missing values will be used. (default: 0)
+  --KL-div             Minimum Kullback–Leibler divergence criterion for
+                       building the training set. The KL divergence measures
+                       the difference in information content between the full
+                       dataset and the training set. The smaller the value,
+                       the more representative the training set will be with
+                       respect to the full dataset. However, this will produce
+                       a larger training set and increase both runtime and RAM
+                       consumption during training. (default: 0.01)
   -e , --epsilon       Convergence criterion (default: 0.0001)
   -i , --maxiter       Maximum number of training iterations (default: 100)
   -nt , --n-tasks      Number of parallel processes. By default all available
@@ -128,17 +136,13 @@ optional arguments:
                        conjunction with --motif to apply sequence constraints.
                        (default: None)
   --forbid-N-pairs     Pairs involving a N are considered invalid. Must be
-                       used in conjunction with either --motif to take
+                       used in conjunction with --motif to take
                        effect (default: False)
   --posteriors         Output the posterior probabilities of pairing states
                        (i.e. the probability Trellis) (default: False)
   --viterbi            Output the most likely sequence of pairing states for
                        entire transcripts (i.e. Viterbi paths) (default:
                        False)
-  --filter-test        Apply the density filter (--min-density) used for the
-                       training to the test set as well. Not recommended as
-                       regions with sparse profiling data will tend to score
-                       generally poorly (default: False)
   --NAN                If NaN are considered informative in term of pairing
                        state, use this flag. However, note that this can lead
                        to unstable results and is therefore not recommended
@@ -168,9 +172,8 @@ This command will generate an output folder `dummy_test` in the current director
 
 - A log file: `<date>.log`
 - Parameters of the trained model (not meant to be read by humans): `trained_model.pickle`
-- A plot of the fitted data: `fit.svg`
-- A plot of the model's log-likelihood convergence: `logL.svg`
-- A folder `iterative_learning/` that contains plots of the fitted data at each training iteration.
+- A plot of the fitted data: `fit.png`
+- A plot of the model's log-likelihood convergence: `logL.png`
 
 ### Scoring motifs
 patteRNA currently supports structural motifs (via [`--motif`](#motifs) or [`--path`](#paths)) that contain no gaps. These options can be used in conjunction with training to perform both training and scoring using a single command. However, we recommend to train patteRNA first and use the trained model in subsequent searches for motifs. The trained model is saved in `trained_model.pickle` and can be loaded using the flag `--model`.
@@ -188,6 +191,7 @@ Scored motifs are available in the file `scores.txt` in the output directory. Th
 - Motif start position (uses a 0-based encoding)
 - Motif end position (ends not included)
 - Motif score
+- Motif c-score
 - Motif in dot-bracket notation
 - Motif in numerical state-sequence (i.e. path) encoded as 0/1 for unpaired/paired bases, respectively.
 - RNA sequence at the motif's location

@@ -19,6 +19,9 @@ import numpy as np
 import logging
 import warnings
 import random
+from scipy.stats import entropy
+# todo remove that when finished
+# import matplotlib.pyplot as plt
 
 from . import globalbaz
 from . import file_handler
@@ -44,9 +47,10 @@ class RNAset:
         max_obs (float): Maximum value of the continuous observations.
         mean_obs (float): Average of the continuous observations.
         median_obs (float): Median of the continuous observations.
-        stdev_obs (float): Standard deviation of the continuous observations.
+        sigma_obs (float): Variance of the continuous observations.
         percentile_obs (np.array): Percentiles to anchor the GMM means.
         histogram (dict): Contains the continuous data histogram bins and densities. Used for plotting.
+        real_KL_div (float): KL divergence of the training set.
 
     """
 
@@ -55,40 +59,50 @@ class RNAset:
         self.rnas = []
         self.name = []
         self.n_rna = 0
+        self.n_rna_unfiltered = 0
         self.T = 0
         self.T_nan = 0
         self.T_0 = 0
+        self.T_continuous = 0
         self.max_T = 0
         self.continuous_obs = None
         self.min_obs = None
         self.max_obs = None
         self.mean_obs = None
         self.median_obs = None
-        self.stdev_obs = None
+        self.sigma_obs = None
         self.percentile_obs = None
         self.histogram = None
 
-    def add_rna(self, rna):
+    def add_rna(self, rna, min_density=0):
         """Add an RNA to the set.
             
         Upon adding an RNA, will update all RNAset-related attributes.
             
         Args:
             rna (RNA): An RNA.
+            min_density (float): Minimum data density to consider a transcript
 
         """
 
-        self.n_rna += 1  # Increment RNA counter
-        # If an RNA with the same name was encountered, add a dummy character to its name
-        if rna.name in self.name:
-            rna.name += "_"
-        rna.name = rna.name.replace(" ", "_")  # Replace spaces in the name with underscores
-        self.name.append(rna.name)  # Add the RNA name to the list
-        self.rnas.append(rna)  # Append the RNA to the set
-        self.T += rna.T  # Increment the number of total observed probing values
-        self.T_nan += rna.T_nan  # Increment the number of missing observed probing values
-        self.T_0 += rna.T_0  # Increment the number of zeros observed probing values
-        self.max_T = rna.T if rna.T > self.max_T else self.max_T  # Update the longest RNA if needed
+        self.n_rna_unfiltered += 1  # Increment RNA before filtering
+
+        # Reject RNA if data density is too poor
+        if (((rna.T_continuous + rna.T_0) / rna.T) >= min_density) and (rna.T_nan != rna.T):
+
+            self.n_rna += 1  # Increment RNA counter
+
+            # If an RNA with the same name was encountered, add a dummy character to its name
+            if rna.name in self.name:
+                rna.name += "_"
+            rna.name = rna.name.replace(" ", "_")  # Replace spaces in the name with underscores
+            self.name.append(rna.name)  # Add the RNA name to the list
+            self.rnas.append(rna)  # Append the RNA to the set
+            self.T += rna.T  # Increment the number of total observed probing values
+            self.T_continuous += rna.T_continuous  # Increment the number of continuous observed probing values
+            self.T_nan += rna.T_nan  # Increment the number of missing observed probing values
+            self.T_0 += rna.T_0  # Increment the number of zeros observed probing values
+            self.max_T = rna.T if rna.T > self.max_T else self.max_T  # Update the longest RNA if needed
 
     def build_continuous_obs(self):
         self.continuous_obs = []
@@ -98,7 +112,6 @@ class RNAset:
 
         self.continuous_obs = np.array(self.continuous_obs)
 
-    # noinspection PyPep8Naming
     def compute_stats(self, K):
         """Compute some basic statistics for the set."""
 
@@ -107,8 +120,8 @@ class RNAset:
         self.max_obs = np.max(self.continuous_obs)
         # self.mean_obs = np.mean(self.continuous_obs)
         self.median_obs = np.median(self.continuous_obs)
-        self.stdev_obs = np.std(self.continuous_obs)
-        percentile_anchors = np.arange(0, 1, (1/(K*2+1)))[1:] * 100
+        self.sigma_obs = np.var(self.continuous_obs)
+        percentile_anchors = np.arange(0, 1, (1 / (K * 2 + 1)))[1:] * 100
         self.percentile_obs = np.percentile(self.continuous_obs, percentile_anchors).reshape(2, -1)
 
     def build_histogram(self):
@@ -119,49 +132,96 @@ class RNAset:
                                                                       bins="auto", normed=True)
         self.histogram["n"] = len(self.histogram["bins"])
 
-    def add_temporary_rna(self, rna):
-        """Add an RNA in "temporary"-mode, i.e. doesn't update the attributes of the set to reduce runtime."""
-
-        self.rnas.append(rna)  # Append the RNA to the set
-
     def log_transform(self):
         """Log transform all observations."""
 
         for rna in self.rnas:
             rna.log_transform()
 
-    def qc_and_build(self, min_density, n):
+    def qc_and_build(self, is_training=False, KL_threshold=None):
         """QC RNAs and reject all containing too many NaNs or Zeros.
-        
+
         Args:
-            min_density (float): Minimum data density allowed in the observation vector.
-            n (int): Maximum number of RNAs in the set.
-            
-        Returns:
+            is_training (bool): Build the training set?
+            KL_threshold (float): Kullback–Leibler divergence criterion to build the training set
 
         """
 
-        if n <= 0:
-            n = np.inf
+        if is_training:
+            # Compute the probability density over the full continuous observation set (RAM savvy)
+            self.build_continuous_obs()
+            self.build_histogram()
 
-        if self.rnas:
-            random.shuffle(self.rnas)
+            # Compute the data density for each transcript
+            density = []
+            for rna in self.rnas:
+                density.append(rna.T_continuous / rna.T)
 
+            # Sort transcripts by density
+            density = np.array(density)
+            density_ix = np.argsort(density)[::-1]
+        else:
+            density_ix = np.arange(len(self.rnas))
+
+        # Initialize the QCed and reference set
         qc_set = RNAset()  # QCed set
         ref_set = RNAset()  # Set with reference secondary structures
 
-        cnt = 0
+        # Variables required for building the training set
+        cnt_subset = 0  # Subset counter to activate KL divergence computation when required
+        train_obs = []
+        do_KL = True
+        qc_set.KL_div = np.inf
 
-        for rna in self.rnas:
-            # Assess that lengths of observation, sequence and structure match.
+        for i in density_ix:
+            rna = self.rnas[i]
+
+            # Assess that length of observation and sequence match
             if rna.T == len(rna.seq):
-                p_nan = np.sum(rna.T_nan | rna.T_0) / rna.T
 
-                if ((1-p_nan) >= min_density) & (cnt < n):
+                if is_training:
+                    if do_KL:
+                        # Add the transcript to the train subset
+                        qc_set.add_rna(rna)
+                        cnt_subset += rna.T_continuous
+
+                        # Add new observations to the set used to compute the probability density of the data
+                        train_obs += list(rna.obs[~rna.mask_nan & ~rna.mask_0])
+
+                        # Compute KL divergence if the subset of data is large enough
+                        if cnt_subset >= globalbaz.GLOBALS["KL_interval"]:
+
+                            # Compute the probability density of the data
+                            train_dens, _ = np.histogram(train_obs,
+                                                         bins=self.histogram["bins"],
+                                                         normed=True)
+                            train_dens[train_dens == 0] = 1E-6
+
+                            # Compute KL divergence
+                            qc_set.KL_div = entropy(self.histogram["dens"], train_dens)
+
+                            # todo remove this part when finished
+                            # print(qc_set.KL_div)
+                            # plt.plot(self.histogram["bins"][1:], train_dens, color="red")
+                            # plt.plot(self.histogram["bins"][1:], self.histogram["dens"], color="blue")
+                            # plt.fill_between(self.histogram["bins"][1:], 0, self.histogram["dens"],
+                            #                  color="blue", alpha=0.2)
+                            # plt.title("# {} {:.3f}".format(len(train_obs), KL_div))
+                            # plt.ylim([0, 0.5])
+                            # plt.savefig("/Users/mledda/Desktop/KL/n_{:d}.png".format(len(train_obs)))
+                            # plt.close()
+
+                            cnt_subset = 0  # Reset the subset size
+
+                        if qc_set.T_continuous >= globalbaz.GLOBALS["min_train_n"]:  # Reached minimum train set size
+                            if qc_set.KL_div <= KL_threshold:  # Train set summarizes well the full data
+                                do_KL = False
+
+                else:  # Doing scoring so all transcripts will be used
                     qc_set.add_rna(rna)
-                    cnt += 1
 
                 if rna.ref_dot is not None:
+                    # Assess that length of observation and structure match
                     if rna.T == len(rna.ref_dot):
                         ref_set.add_rna(rna)
                     else:
@@ -171,6 +231,9 @@ class RNAset:
             else:
                 # Raise warning for transcripts that do not match in length
                 logger.warning("Input data are not matching in length for transcript -> {}".format(rna.name))
+
+        if np.isinf(qc_set.KL_div):
+            qc_set.KL_div = 0
 
         return qc_set, ref_set
 
@@ -225,13 +288,14 @@ class RNA:
 
 
 # noinspection PyUnusedLocal
-def build_rnalib_from_files(fp_seq, fp_obs, fp_ref):
+def build_rnalib_from_files(fp_seq, fp_obs, fp_ref, min_density):
     """Reads both the sequence and the observations transcriptome-wide.
     
     Args:
         fp_seq (str): Pointer to the FASTA file containing the sequences
         fp_obs (str): Pointer to the observation file (in FASTA-like format)
         fp_ref (str): FASTA-like file of reference secondary structures in dot-bracket notation
+        min_density (float): Minimum data density to consider a transcript
 
     Returns:
         rna_set (RNAset): Set of RNAs with both sequences and observations.
@@ -245,7 +309,7 @@ def build_rnalib_from_files(fp_seq, fp_obs, fp_ref):
     observations = file_handler.read_observations(fp_obs)
 
     for rna, obs in observations.items():
-        putative_rnas[rna] = {"seq": "N"*len(obs),
+        putative_rnas[rna] = {"seq": "N" * len(obs),
                               "obs": obs,
                               "ref_dot": None}
     observations = None  # rm entry
@@ -269,15 +333,16 @@ def build_rnalib_from_files(fp_seq, fp_obs, fp_ref):
         ref_structures = None  # garbage collection
 
     # Build the set of RNAs
+    initial_n_rnas = len(putative_rnas.keys())
     for rna in putative_rnas.keys():
         current_rna = RNA(name=rna,
                           obs=putative_rnas[rna]["obs"],
                           seq=putative_rnas[rna]["seq"],
                           ref_dot=putative_rnas[rna]["ref_dot"])
-        rna_set.add_temporary_rna(current_rna)
+        rna_set.add_rna(current_rna, min_density=min_density)
         putative_rnas[rna] = None  # garbage collection
 
-    return rna_set
+    return rna_set, initial_n_rnas
 
 
 if __name__ == '__main__':

@@ -6,12 +6,20 @@ import logging
 import numpy as np
 import tqdm
 
-from . import misclib, logger_config, patternlib, rnalib, gmmhmm, globalbaz, file_handler, input_args
+from . import misclib
+from . import logger_config
+from . import patternlib
+from . import rnalib
+from . import gmmhmm
+from . import globalbaz
+from . import file_handler
+from . import input_args
 
 # Initialize globals and switches
 GLOBALS = globalbaz.GLOBALS
 
 
+# noinspection PyUnboundLocalVariable
 def main(testcmd=None):
     # Initialize switches
     switch = {"do_training": False,
@@ -21,11 +29,18 @@ def main(testcmd=None):
               "is_motif": False,
               "is_gquad": False,
               "is_path": False,
-              "do_seq": False}
+              "do_seq": False,
+              "do_pvalues": True}
+
+    # UI
+    ui_msg_padding = 27
+
+    spinner_msg_pad = ui_msg_padding + 7  # This is to account for "INFO - "
+    ui_msg = "{:<%d}" % ui_msg_padding
+    ui_msg_done = "{:<%d}... done in {}" % ui_msg_padding
 
     # Initialize parameters
     reference_set = None
-    fp_out = None
     main_time = misclib.timer_start()
 
     # Input arguments handling
@@ -72,14 +87,8 @@ def main(testcmd=None):
         switch["do_scoring"] = True
         switch["do_scan"] = True
 
-    # LEGACY parse the --seq and --pattern flag if provided
-    if args.pattern is not None:
-        switch["do_seq"] = args.seq
-        switch["do_scoring"] = True
-        switch["do_scan"] = True
-        motifs = patternlib.pattern_builder(motif_regex=args.pattern,
-                                            seq_constraints=args.seq,
-                                            forbid_N_pairs=args.forbid_N_pairs)
+    if args.no_cscores:
+        switch["do_pvalues"] = False
 
     # Check if we need a training phase
     if args.model is None:
@@ -98,17 +107,34 @@ def main(testcmd=None):
     # Check if files/folders will be overwritten
     file_handler.check_overwrites(args, switch)
 
+    # Remove any trailing temporary files
+    fp_out_unsorted = None
+    fp_out = None
+    fp_p = None
+    fp_h0_partial = None
+    fp_h0 = None
+
+    if switch["do_scan"]:
+        # Initialize pointers to the output score file
+        fp_out_unsorted = os.path.join(args.output, GLOBALS["output_name"]["unsorted_scores"])
+        fp_out = os.path.join(args.output, GLOBALS["output_name"]["scores"])
+        fp_p = os.path.join(args.output, GLOBALS["output_name"]["p_scores"])
+        fp_h0_partial = os.path.join(args.output, GLOBALS["output_name"]["h0_partial"])
+        fp_h0 = os.path.join(args.output, GLOBALS["output_name"]["h0"])
+
+        # Cleanup - Making sure we remove any existing temporary file
+        if os.path.exists(fp_out_unsorted):
+            os.remove(fp_out_unsorted)
+        if os.path.exists(fp_p):
+            os.remove(fp_p)
+        if os.path.exists(fp_h0_partial):
+            os.remove(fp_h0_partial)
+        if os.path.exists(fp_h0):
+            os.remove(fp_h0)
+
     # Print configs to the log file
     config_summary = input_args.summarize_config(args)
     logger.debug(config_summary)
-
-    # Write UI message
-    if switch["is_motif"]:
-        logger.info("Target motif -> {}".format(args.motif))
-    if switch["is_gquad"]:
-        logger.info("Target GQ -> {}".format(args.GQ))
-    if switch["is_path"]:
-        logger.info("Target path -> {}".format(args.path))
 
     # Set mutable global system configs and initialize the model
     gmmhmm.global_config(n_tasks=args.n_tasks,
@@ -120,10 +146,18 @@ def main(testcmd=None):
                          nan=args.NAN)
     hmm = gmmhmm.GMMHMM()  # Initialize a GMMHMM object
 
+    # Write UI message
+    if switch["is_motif"]:
+        logger.info(ui_msg.format("Target motif  ->") + "{}".format(args.motif))
+    if switch["is_gquad"]:
+        logger.info(ui_msg.format("Target GQ  ->") + "{}".format(args.GQ))
+    if switch["is_path"]:
+        logger.info(ui_msg.format("Target path  ->") + "{}".format(args.path))
+
     # Load data
     try:
-        start_time = misclib.timer_start()
-        logger.info("Loading input data ...")
+        task_time = misclib.timer_start()
+        logger.info(ui_msg.format("Loading input data"))
         fps_obs, assays = input_args.check_obs_extensions([args.input])  # Check obs filename extensions
         if len(fps_obs) == 0:  # No files found
             logger.error("WOOPS, no input profiling data found.")
@@ -132,9 +166,10 @@ def main(testcmd=None):
             if assays[0] == "pars":  # Check if the input is a PARS assay
                 gmmhmm.global_config(pars=True)
 
-            rna_set = rnalib.build_rnalib_from_files(fp_seq=args.fasta,
-                                                     fp_obs=fps_obs[0],
-                                                     fp_ref=args.reference)
+            rna_set, initial_n_rnas = rnalib.build_rnalib_from_files(fp_seq=args.fasta,
+                                                                     fp_obs=fps_obs[0],
+                                                                     fp_ref=args.reference,
+                                                                     min_density=args.min_density)
     except FileNotFoundError:
         logger.error("WOOPS, no input profiling data found.")
         sys.exit()
@@ -143,20 +178,33 @@ def main(testcmd=None):
     if args.log:
         rna_set.log_transform()
 
+    logger.info(ui_msg_done.format("Loading input data", misclib.timer_stop(task_time)))
+
     # Do we need to train the model?
     train_set = None
     if switch["do_training"]:
+        logger.info(ui_msg.format("Building the training set"))
 
         # Prepare training set by filtering and building the RNA set
-        train_set, reference_set = rna_set.qc_and_build(min_density=args.min_density, n=args.n)
+        task_time = misclib.timer_start()
+        train_set, reference_set = rna_set.qc_and_build(is_training=True, KL_threshold=args.KL_div)
 
-        logger.info("Loading ... done in {}".format(misclib.timer_stop(start_time)))
-        logger.info("Transcript #: Initial {} | Train {}".format(len(rna_set.rnas),
-                                                                 len(train_set.rnas)))
+        logger.info(ui_msg_done.format("Building the training set", misclib.timer_stop(task_time)))
+        logger.info("Training set summary - \n"
+                    "       Initial transcripts        {:d}\n"
+                    "       Passed QC                  {:d}\n"
+                    "       Used transcripts           {:d}\n"
+                    "       # Data points (in GMM)     {:d}\n"
+                    "       KL div                     {:.3g}".format(initial_n_rnas,
+                                                                      len(rna_set.rnas),
+                                                                      len(train_set.rnas),
+                                                                      train_set.T_continuous,
+                                                                      train_set.KL_div))
 
-        # Check if we need to determine K automatically
-        if args.k <= 0:
-            switch["do_auto_k"] = True
+    # Check if we need to determine K automatically
+    if args.k <= 0:
+        args.k = 1
+        switch["do_auto_k"] = True
 
     # Garbage collection to free RAM if we do not need a scoring phase
     if switch["do_scoring"] is False:
@@ -164,66 +212,107 @@ def main(testcmd=None):
 
     # Train the model or load a pre-trained one
     if switch["do_training"]:
+
+        # Check if reference structures were provided
+        if len(reference_set.rnas) != 0:
+            switch["do_auto_k"] = False
+
         # Check that we have data to train the model
         if len(train_set.rnas) == 0:
-            logger.error("No training data left after filtering, try decreasing --min-density.")
+            logger.error("No training data found.")
             sys.exit()
 
         train_set.build_continuous_obs()
         train_set.build_histogram()
 
-        # Import the data
-        hmm.import_data(train_set=train_set)
+        task_time = misclib.timer_start()
 
-        # Determine K if needed
-        if switch["do_auto_k"]:
-            logger.info("Finding an optimal K ...")
-            start_time = misclib.timer_start()
-            args.k, AICs = hmm.determine_k(N=2)
-            logger.info("Optimal K is {} ... done in {}".format(args.k, misclib.timer_stop(start_time)))
+        found_optimal_k = False
+        prev_bic = np.inf
+        while not found_optimal_k:
 
-        # Initialize the model
-        train_set.compute_stats(args.k)
+            # Reset the model
+            hmm.reset()
+
+            # Import the data
+            train_set.compute_stats(args.k)
+            hmm.import_data(train_set=train_set)
+
+            # Initialize the model
+            hmm.initialize_model(N=2, K=args.k, pi=args.pi, A=args.A,
+                                 mu=args.mu, sigma=args.sigma, w=args.w, w_min=-1,
+                                 phi=args.phi, upsilon=args.upsilon, reference_set=reference_set)
+
+            # Train the model
+            hmm.train(max_iter=args.maxiter, epsilon=args.epsilon)
+
+            if not switch["do_auto_k"]:
+                found_optimal_k = True
+
+            # logger.info("Model's BIC = {:.3g}".format(hmm.bic))
+            if prev_bic <= hmm.bic:  # Means the previous model had a better AIC
+                found_optimal_k = True
+                # Load the previous model
+                hmm.load(fp=os.path.join(args.output, "trained_model.pickle"))
+
+                # Import the data
+                hmm.import_data(train_set=train_set)
+                train_set.compute_stats(args.k)
+
+            else:
+                # Save the current model
+                hmm.dump(fp=os.path.join(args.output, "trained_model.pickle"))
+                prev_bic = hmm.bic
+                args.k += 1
+
         train_set.continuous_obs = None  # Garbage collection
-        logger.info("Training ...")
-        start_time = misclib.timer_start()
 
-        hmm.initialize_model(N=2, K=args.k, pi=args.pi, A=args.A,
-                             mu=args.mu, sigma=args.sigma, w=args.w, w_min=args.wmin,
-                             phi=args.phi, upsilon=args.upsilon, reference_set=reference_set)
-
-        # Train the model
-        hmm.train(max_iter=args.maxiter, epsilon=args.epsilon)
         hmm.take_snapshot(stdout=True,
                           fp_fit=os.path.join(args.output, GLOBALS["output_name"]["fit_plot"]),
                           fp_logl=os.path.join(args.output, GLOBALS["output_name"]["logL_plot"]))
 
-        # Save the model
-        hmm.dump(fp=os.path.join(args.output, "trained_model.pickle"))
-        logger.info("Training ... done in {}".format(misclib.timer_stop(start_time)))
+        if switch["do_auto_k"]:
+            logger.info(ui_msg.format("Optimal K  ->") + "{:d}".format(hmm.K))
+
+        # Check if the likelihood converged
+        if not hmm.did_converge:
+            logger.warning("patteRNA did not converge within {} iterations. Try increasing --maxiter.\n"
+                           "Last 5 logL -> {}".format(args.maxiter,
+                                                      np.round(hmm.logL[-5:], 2)))
+
+        # Check if the model had to invert pairing states
+        if hmm.did_invert:
+            logger.warning("Oups! The model inverted paired/unpaired states. Parameters were adjusted "
+                           "to resolve this. Please check the output to make sure the model is appropriate.")
+
+        logger.info(ui_msg_done.format("Training", misclib.timer_stop(task_time)))
     else:
         # Load the trained model
         logger.info("Using pre-trained model at {}".format(args.model))
         hmm.load(args.model)
 
     # Scoring phase (if required by the user)
-    fp_out_unsorted = None
     if switch["do_scoring"]:
-        start_time = misclib.timer_start()
+        task_time = misclib.timer_start()
 
+        logger.info(ui_msg.format("Building the scoring set"))
         # Build the test set from the original RNA set
-        logger.info("Building the scoring set ...")
-        if args.filter_test:
-            test_set, _ = rna_set.qc_and_build(min_density=args.min_density, n=args.n)
-        else:
-            test_set, _ = rna_set.qc_and_build(min_density=0, n=np.inf)
+        test_set, _ = rna_set.qc_and_build()
+
+        n_test = len(test_set.rnas)
+
+        logger.info(ui_msg_done.format("Building the scoring set", misclib.timer_stop(task_time)))
+        logger.info("Scoring set summary - \n"
+                    "       Initial transcripts        {:d}\n"
+                    "       Passed QC                  {:d}\n"
+                    "       Used transcripts           {:d}\n"
+                    "       # Data points              {:d}".format(initial_n_rnas,
+                                                                    len(rna_set.rnas),
+                                                                    len(test_set.rnas),
+                                                                    test_set.T - test_set.T_nan))
 
         # noinspection PyUnusedLocal
         rna_set = None  # Garbage collection to free RAM
-
-        n_test = len(test_set.rnas)
-        logger.info("Building the scoring set ... done")
-        logger.info("Computing scores for {} transcripts ...".format(n_test))
 
         # Subset the test set such that a maximum of <TEST_BATCH_SIZE> RNAs are handled at each iterations
         batches_mask = misclib.make_batches(n=n_test,
@@ -232,9 +321,6 @@ def main(testcmd=None):
 
         # Check if motifs are requested
         if switch["do_scan"]:
-            # Initialize pointers to the output score file
-            fp_out_unsorted = os.path.join(args.output, GLOBALS["output_name"]["unsorted_scores"])
-            fp_out = os.path.join(args.output, GLOBALS["output_name"]["scores"])
 
             # Write the header
             gmmhmm.write_score_header(fp_out_unsorted)
@@ -250,8 +336,10 @@ def main(testcmd=None):
         else:
             fp_posteriors = None
 
+        logger.info(ui_msg.format("Computing outputs"))
         # Initialize a progress bar and iterate over batches
-        pbar = tqdm.tqdm(total=n_test, mininterval=1, disable=not args.verbose, leave=False)
+        pbar = tqdm.tqdm(total=n_test, mininterval=1, disable=not args.verbose, leave=False,
+                         desc="Scoring dataset", unit=" transcripts")
         iter_cnt = 0
 
         # Iterations over batches (done to minimize RAM usage and handle very large datasets)
@@ -265,24 +353,47 @@ def main(testcmd=None):
                       patterns=motifs,
                       fp_score=fp_out_unsorted,
                       is_GQ=switch["is_gquad"],
+                      do_pvalues=switch["do_pvalues"],
                       fp_viterbi=fp_viterbi,
-                      fp_posteriors=fp_posteriors)
+                      fp_posteriors=fp_posteriors,
+                      fp_h0_partial=fp_h0_partial,
+                      fp_h0=fp_h0)
 
             pbar.update(n_batch)
-            logger.debug("Computing scores... {}/{}".format(iter_cnt, n_test))
+            if not args.verbose:
+                logger.debug("Computing outputs ... {}/{}".format(iter_cnt, n_test))
             iter_cnt += n_batch
+        pbar.update(n_test)
         pbar.close()
+        if not args.verbose:
+            logger.debug("Computing outputs ... {}/{}".format(iter_cnt, n_test))
+        logger.info(ui_msg_done.format("Computing outputs", misclib.timer_stop(task_time)))
 
-        logger.info("Computing scores... done in {}".format(misclib.timer_stop(start_time)))
-
-    # Sort the score file and delete the unsorted file
     if switch["do_scan"]:
-        logger.info("Sorting scores...".format(misclib.timer_stop(main_time)))
-        file_handler.sort_score_file(fp_out_unsorted, fp_out)
-        logger.info("Sorting scores... done".format(misclib.timer_stop(main_time)))
+        # Compute p_values
+        if switch["do_pvalues"]:
+            task_time = misclib.timer_start()
+            logger.info(ui_msg.format("Computing c-scores"))
+            file_handler.h0_merge(fp=fp_h0,
+                                  fp_partial=fp_h0_partial)
+            os.remove(fp_h0_partial)
+            gmmhmm.compute_and_write_p_values(fp_h0, fp_out_unsorted, fp_p)
+            os.remove(fp_h0)
+            os.rename(fp_p, fp_out_unsorted)
+            logger.info(ui_msg_done.format("Computing c-scores", misclib.timer_stop(task_time)))
 
-    logger.info("Process terminated in {}".format(misclib.timer_stop(main_time)))
-    logger.info("Output written to -> {}".format(args.output))
+        # Sort the score file and delete the unsorted file
+        logger.info(ui_msg.format("Sorting scores"))
+        task_time = misclib.timer_start()
+        if switch["do_pvalues"]:  # sort by c-values
+            file_handler.sort_score_file(fp_out_unsorted, fp_out, column_ix=4, decreasing=True)
+        else:  # sort by scores
+            file_handler.sort_score_file(fp_out_unsorted, fp_out, column_ix=3, decreasing=True)
+        os.remove(fp_out_unsorted)
+        logger.info(ui_msg_done.format("Sorting scores", misclib.timer_stop(task_time)))
+
+    logger.info(ui_msg_done.format("Task", misclib.timer_stop(main_time)))
+    logger.info(ui_msg.format("Output written to  ->") + "{}".format(args.output))
 
 
 if __name__ == "__main__":

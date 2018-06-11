@@ -1,7 +1,8 @@
-# Note that this file lists all currently supported options but as it has priority ove the command-line arguments,
+# This file lists all currently supported options but as it has priority over the command-line arguments,
 # only needed arguments should be written here.
 # For example, setting the verbosity to true can be accomplished by writing a config file containing only the line:
-#  verbose: True
+#
+#verbose: True
 
 ######## GENERAL PARAMETERS ########
 
@@ -10,9 +11,6 @@ fasta: sample_data/weeks_set.fa
 
 # Log transform the data?
 log: True
-
-# Minimum data density (i.e. non 0 or NaNs) to accept a transcript
-min_density: 0.5
 
 # Verbose output?
 verbose: False
@@ -29,9 +27,15 @@ no_prompt: False
 # Run in debug mode?
 debug: False
 
+# Minumum data density allowed to consider a transcript
+min_density: 0
 
 
 ######## TRAINING PARAMETERS ########
+
+# Path to a FASTA-like file containing reference secondary structures in dot-bracket notation for supervised
+# initialization of model's parameters
+reference: None
 
 # Convergence criterion
 epsilon: 1e-4
@@ -39,13 +43,12 @@ epsilon: 1e-4
 # Maximum number of iterations during training
 maxiter: 100
 
-# Number of RNAs used for training
-n: 10
+# Kullback–Leibler divergence criterion
+KL_div: 0.01
 
 # No GMM training. If set, only HMM parameters will be trained.
 # Assumes the full GMM (i.e. mean, sigma and w) is known by the user.
 nogmm: False
-
 
 
 ######## HMM PARAMETERS ########
@@ -108,5 +111,5 @@ viterbi: False
 # Consider pairs involving a N invalid
 forbid_N_pairs: False
 
-# Apply data quality filters to the test set as well?
-filter_test: False
+# Do not compute c-scores
+no_cscores: False

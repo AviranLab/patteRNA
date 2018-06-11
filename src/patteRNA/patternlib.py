@@ -4,6 +4,8 @@ import regex
 import itertools
 import logging
 import sys
+from scipy.stats import beta, pearson3, exponnorm, genlogistic
+import matplotlib.pyplot as plt
 
 from . import globalbaz
 
@@ -13,7 +15,6 @@ logger = logging.getLogger(__name__)
 PAIRING_TABLE = globalbaz.GLOBALS["pairing_table"]  # Set the default pairing table
 
 
-# CANONICAL STRUCTURAL MOTIFS
 class Pattern:
     def __init__(self, dot, path_str):
         """Initialize attributes."""
@@ -47,36 +48,6 @@ class Pattern:
             valid = True
 
         return valid
-
-    def ensure_pairing(self, seq):
-        """Ensures that the structure given by the dot-bracket can form based on the underlying sequence.
-
-        Args:
-            seq (list): Underlying RNA sequence as a list
-
-        Returns: True if pairing is ensured, False otherwise.
-
-        """
-
-        pairing_ensured = True
-
-        for i in range(len(self.pairing_table[0])):
-            if not seq[self.pairing_table[0][i]] in PAIRING_TABLE[seq[self.pairing_table[1][i]]]:
-                pairing_ensured = False
-                break
-
-        # pairing_ensured = True
-        #
-        # if self.is_symmetrical:
-        #     seq = list(seq)  # string to list
-        #     for ix in range(self.n_left):
-        #         if not seq[self.right_partner[ix]] in PAIRING_TABLE[seq[self.left_partner[ix]]]:
-        #             pairing_ensured = False
-        #             break
-        # else:
-        #     pairing_ensured = False
-
-        return pairing_ensured
 
     def compute_pairing_table(self):
 
@@ -125,6 +96,36 @@ class Pattern:
                         break
 
         return table
+
+    def ensure_pairing(self, seq):
+        """Ensures that the structure given by the dot-bracket can form based on the underlying sequence.
+
+        Args:
+            seq (list): Underlying RNA sequence as a list
+
+        Returns: True if pairing is ensured, False otherwise.
+
+        """
+
+        pairing_ensured = True
+
+        for i in range(len(self.pairing_table[0])):
+            if not seq[self.pairing_table[0][i]] in PAIRING_TABLE[seq[self.pairing_table[1][i]]]:
+                pairing_ensured = False
+                break
+
+        # pairing_ensured = True
+        #
+        # if self.is_symmetrical:
+        #     seq = list(seq)  # string to list
+        #     for ix in range(self.n_left):
+        #         if not seq[self.right_partner[ix]] in PAIRING_TABLE[seq[self.left_partner[ix]]]:
+        #             pairing_ensured = False
+        #             break
+        # else:
+        #     pairing_ensured = False
+
+        return pairing_ensured
 
 
 def parse_motif(args):
@@ -210,7 +211,6 @@ def path_regex2substrings(regex_in):
     return list(exrex.generate(regex_in))
 
 
-# G-QUADRUPLEXES
 def g_quadruplex_finder(seq, min_quartet, max_quartet, min_loop, max_loop):
     """Finds putative G-quadruplexes in a RNA sequence.
 
@@ -304,7 +304,117 @@ def g_quadruplex_finder(seq, min_quartet, max_quartet, min_loop, max_loop):
     return quad_repo
 
 
-# GENERAL
+def h0_collect_scores(h0_set, path_repo, rna):
+    """Score paths for the Null score distribution based on valid scored motifs.
+
+    Args:
+        h0_set (dict): Repository of Null scores per motifs
+        path_repo (list[dict]): Repository of valid motifs, starts, stops, and dot-brackets
+        rna (GMMHMM_SingleObs): Object holding RNA sequence and model
+
+    Returns:
+        h0_set (dict): Updated repository of Null scores per motifs
+
+    """
+
+    h0_paths = {}  # Will return an empty h0_path dict if the path_repo is empty
+    if path_repo:
+        for path in path_repo:
+
+            frame = range(path["start"], path["end"])  # Get start/end index
+            motif = "".join([str(i) for i in path["path"][frame]])  # Get pattern (to use as key)
+
+            #  Index h0_paths by unique motifs
+            if motif not in h0_paths.keys():
+                h0_paths[motif] = []
+
+            h0_paths[motif].append(path["start"])
+
+        # Score null paths
+        for h0_path, starts in h0_paths.items():
+            t = len(h0_path)
+
+            if h0_path not in h0_set.keys():
+                h0_set[h0_path] = []
+
+            if h0_set[h0_path] is not None:  # If false, means we have enough h0 scores for this path (i.e. skip it)
+
+                # Get random starts, omitting locations where a possible motif was found
+                mask = np.repeat(True, rna.T - t + 1)
+                mask[starts] = False
+                rstarts = np.argwhere(mask).reshape(-1)
+
+                # If no unrealizable paths are available, then resort to sampling available paths
+                # todo optimize as we do not need to compute score again (i.e. we can retrieve already scored paths)
+                if len(rstarts) == 0:
+                    rstarts = np.array(starts)
+
+                rends = rstarts + t  # Get path's ends based on starts
+
+                num_path = np.array(list(h0_path), dtype=int)  # String to numerical path
+
+                for rstart, rend in zip(rstarts, rends):
+
+                    if len(h0_set[h0_path]) < globalbaz.GLOBALS["h0_max_size"]:  # More scores are needed for the h0
+                        full_path = np.pad(num_path, (rstart, rna.T - rend), 'constant', constant_values=-1)
+                        curr_score, rejected = rna.score_path({"start": rstart, "end": rend, "path": full_path})
+
+                        if not rejected:
+                            h0_set[h0_path].append(curr_score)
+
+                    else:  # We collected enough h0 so we can go to the next path
+                        break
+
+    return h0_set
+
+
+def h0_fit(h0_path_set):
+    """Fit a Gaussian distribution for each motifs and RNA.
+
+    Args:
+        h0_path_set (dict): Repository of Null scores per motifs
+
+    Returns:
+        h0_params (dict): Null distribution parameters for each motif
+
+    """
+
+    h0_params = {}
+    for path, scores in h0_path_set.items():
+        h0_params[path] = {}
+        if len(scores) >= globalbaz.GLOBALS["h0_min_size"]:
+            # x_bins = np.linspace(min(scores), max(scores), 100)
+            # plt.hist(scores, x_bins, normed=1)
+            # plt.show()
+            # # mean, std = norm.fit(np.array(scores))
+            # h0_params[path]["mean"] = mean
+            # h0_params[path]["std"] = std
+
+            path_scores = np.array(scores)
+            floc = np.min(path_scores)-1
+            fscale = 2*((np.max(path_scores)+1)-(np.min(path_scores)-1))
+
+            a, b, floc, fscale = beta.fit(path_scores, floc=floc, fscale=fscale)
+            h0_params[path]["a"] = a
+            h0_params[path]["b"] = b
+            h0_params[path]["loc"] = floc
+            h0_params[path]["scale"] = fscale
+
+        else:
+            # h0_params[path]["mean"] = np.nan
+            # h0_params[path]["std"] = np.nan
+
+            logger.warning("Insufficient null sites to build a null distribution for path: '{}'\n"
+                           "Scores for path '{}' will not be normalized.".format(path, path))
+
+            h0_params[path]["a"] = np.nan
+            h0_params[path]["b"] = np.nan
+            h0_params[path]["loc"] = np.nan
+            h0_params[path]["scale"] = np.nan
+
+    return h0_params
+
+
 def dot2states(dot, as_string=False):
     """Translate a dot-bracket string in a sequence of numerical states"""
 

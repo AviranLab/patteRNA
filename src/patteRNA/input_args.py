@@ -9,7 +9,6 @@ from . import globalbaz
 
 
 def parse_cl_args(inputargs):
-
     # Define the args parser
     parser = argparse.ArgumentParser(prog="patteRNA",
                                      description="Rapid mining of RNA secondary structure motifs from profiling data.",
@@ -17,7 +16,7 @@ def parse_cl_args(inputargs):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version",
                         action="version",
-                        version="%(prog)s 1.1.4")
+                        version="%(prog)s 1.2.0")
     parser.add_argument("input",
                         metavar="probing",
                         type=str,
@@ -38,14 +37,16 @@ def parse_cl_args(inputargs):
                         metavar="",
                         default=None,
                         type=str,
-                        # help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.",
-                        help=argparse.SUPPRESS)  # NOT SUPPORTED
+                        help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.")
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="Print progress")
     parser.add_argument("-l", "--log",
                         action="store_true",
                         help="Log transform input data")
+    parser.add_argument("--no-cscores",
+                        action="store_true",
+                        help="Do not compute c-scores during scoring")
     parser.add_argument("--config",
                         metavar="",
                         type=str,
@@ -56,22 +57,26 @@ def parse_cl_args(inputargs):
                         type=int,
                         default=-1,
                         help="Number of Gaussian components per pairing state in the GMM model. By default, K is "
-                             "determined automatically using Aikaike Information Criteria. If K <= 0, automatic "
+                             "determined automatically using Bayesian Information Criteria. If K <= 0, automatic "
                              "detection is enabled. Increasing K manually will make the model fit the data tighter but "
-                             "could result on overfitting. Fitted data should always be visually inspected after "
+                             "could result in overfitting. Fitted data should always be visually inspected after "
                              "training to gauge if the model is adequate")
-    parser.add_argument("-n",
-                        metavar="",
-                        type=int,
-                        default=-1,
-                        help="Number of transcripts used for training. We recommend using about 500 to 1000 "
-                             "transcripts for large datasets. Transcripts are randomly selected if -n is lower than "
-                             "the total number of available transcripts")
     parser.add_argument("-d", "--min-density",
                         metavar="",
                         type=float,
-                        default=0.5,
-                        help="Minimum data density allowed in each transcript used for training.")
+                        default=0,
+                        help="Transcripts with data density below this threshold will be rejected from analysis. "
+                             "Valid range is 0 to 1. For example, 0.5 means that only transcripts containing "
+                             "less than 50%% missing values will be used.")
+    parser.add_argument("--KL-div",
+                        metavar="",
+                        type=float,
+                        default=0.01,
+                        help="Minimum Kullback–Leibler divergence criterion for building the training set. The KL "
+                             "divergence measures the difference in information content between the full dataset "
+                             "and the training set. The smaller the value, the more representative the training "
+                             "set will be with respect to the full dataset. However, this will produce a "
+                             "larger training set and increase both runtime and RAM consumption during training.")
     parser.add_argument("-e", "--epsilon",
                         metavar="",
                         type=float,
@@ -92,25 +97,11 @@ def parse_cl_args(inputargs):
                         type=str,
                         default=None,
                         help="Trained .pickle GMMHMM model")
-    parser.add_argument("--pattern",
-                        metavar="",
-                        type=str,
-                        default=None,
-                        # help="Pattern of the target motif in the extended dot-bracket notation. Paired and "
-                        #      "unpaired nucleotides are represented by parentheses '()' and dots '.', respectively. A "
-                        #      "stretch of consecutive characters is declared using the format <char>{<from>, <to>}. "
-                        #      "For example, use .{2,4} to declare 2 to 4 consecutive repeats of unpaired nucleotides "
-                        #      "in the pattern.",
-                        help=argparse.SUPPRESS)  # LEGACY
-    parser.add_argument("-s", "--seq",
-                        action="store_true",
-                        # help="Use sequence constraints when searching for motifs",
-                        help=argparse.SUPPRESS)  # LEGACY
     parser.add_argument("--motif",
                         metavar="",
                         type=str,
                         default=None,
-                        help="Score target motif declared using the extended dot-bracket notation. Paired and unpaired "
+                        help="Score target motif declared using an extended dot-bracket notation. Paired and unpaired "
                              "bases are denoted using parentheses '()' and dots '.', respectively. A stretch of "
                              "consecutive characters is declared using the format <char>{<from>, <to>}. Can be used in "
                              "conjunction with --mask to modify the expected underlying sequence of pairing states.")
@@ -118,10 +109,10 @@ def parse_cl_args(inputargs):
                         metavar="",
                         type=str,
                         default=None,
-                        # help="Score G-quadruplexes. GQ are declared by passing a string of format "
-                        #      "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
-                        #      "number of quartets in the GQ and loops the spacing between G-columns.",
-                             help=argparse.SUPPRESS)  # NOT SUPPORTED
+                        #help="Score G-quadruplexes. GQ are declared by passing a string of format "
+                        #     "\"[<min quartet>, <max quartet>, <min loop>, <max loop>]\". Quartet denotes the"
+                        #     "number of quartets in the GQ and loops the spacing between G-columns."
+                        help=argparse.SUPPRESS)
     parser.add_argument("--path",
                         metavar="",
                         type=str,
@@ -132,8 +123,8 @@ def parse_cl_args(inputargs):
                              "constraints.")
     parser.add_argument("--forbid-N-pairs",
                         action="store_true",
-                        help="Pairs involving a N are considered invalid. Must be used in conjunction with either "
-                             "--motif or --GQ to take effect")
+                        help="Pairs involving a N are considered invalid. Must be used in conjunction with "
+                             "--motif to take effect")
     parser.add_argument("--posteriors",
                         action="store_true",
                         help="Output the posterior probabilities of pairing states (i.e. the probability Trellis)")
@@ -141,18 +132,6 @@ def parse_cl_args(inputargs):
                         action="store_true",
                         help="Output the most likely sequence of pairing states for entire transcripts (i.e. Viterbi "
                              "paths)")
-    parser.add_argument("-wmin",  # Not currently supported
-                        metavar="",
-                        type=float,
-                        default=0,
-                        # help="Drop Gaussian mixture components below this weight."
-                        #      "Note that if this value is set too high then all components "
-                        #      "will be dropped resulting in a error."
-                        help=argparse.SUPPRESS)  # OBSOLETE
-    parser.add_argument("--filter-test",
-                        action="store_true",
-                        help="Apply the density filter used for the training to the test set as well. Not recommended "
-                             "as regions with sparse profiling data will tend to score generally poorly")
     parser.add_argument("--NAN",
                         action="store_true",
                         help="If NaN are considered informative in term of pairing state, use this flag. However, "
@@ -205,7 +184,6 @@ def parse_config_yaml(fp):
 
 
 def add_more_defaults(cl_args):
-
     # Add additional defaults available via YAML config only
     defaults = {"pi": None,
                 "A": None,
@@ -220,7 +198,6 @@ def add_more_defaults(cl_args):
 
 
 def merge_args(yaml_args, cl_args):
-
     for arg, v in yaml_args.items():
         setattr(cl_args, arg, v)
 

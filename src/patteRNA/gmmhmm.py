@@ -8,10 +8,15 @@ import warnings
 import functools
 from copy import deepcopy
 from sklearn.mixture import GaussianMixture
+from sklearn.preprocessing import quantile_transform
+from scipy.stats import norm, beta
+from tqdm import tqdm
+# from statsmodels.sandbox.stats.multicomp import multipletests  todo was used for FDR, now not in setup.py anymore
 from . import misclib
 from . import rnalib
 from . import globalbaz
 from . import patternlib
+from . import file_handler
 
 # Initialize globals
 GLOBALS = globalbaz.GLOBALS  # Initialize globals
@@ -45,6 +50,10 @@ class GMMHMM:
             mu (np.array): Means of the Gaussian components.
             sigma (np.array): Variance of the Gaussian components.
             gmm_gamma (np.array): Overall state probabilities.
+            n_params (int): Number of parameters in the model
+            bic (float): Model's Bayesian Information Criterion
+            did_converge (bool) = Did the model's likelihood converge?
+            did_invert(bool) = Did the GMM invert pairing states?
 
     """
 
@@ -54,6 +63,47 @@ class GMMHMM:
         # Misc
         self.iter_cnt = None
         self.histogram = None
+        self.n_params = None
+        self.bic = None
+
+        # Dataset
+        self.train_set = None
+        self.train_children = None
+        self.test_children = None
+
+        # Pattern of interest
+        self.pattern = None
+
+        # HMM states
+        self.N = None
+        self.states = None
+
+        # HMM params
+        self.pi = None
+        self.A = None
+        self.logL = None
+        self.phi = None
+        self.upsilon = None
+
+        # GMM model
+        self.K = None  # Nb of Gaussian components
+        self.w = None  # Mixture coefficient
+        self.w_min = None  # Minimum allowed mixture coefficient
+        self.mu = None  # Gaussian component means
+        self.sigma = None  # Gaussian component variances
+
+        # Full model
+        self.gmm_gamma = None  # Overall state probabilities
+        self.did_converge = None
+        self.did_invert = None
+
+    def reset(self):
+
+        # Misc
+        self.iter_cnt = None
+        self.histogram = None
+        self.n_params = None
+        self.bic = None
 
         # Dataset
         self.train_set = None
@@ -93,7 +143,7 @@ class GMMHMM:
 
         """
 
-        self.train_set = train_set
+        self.train_set = deepcopy(train_set)
         self.histogram = dict(self.train_set.histogram)  # Propagate the histogram bin information
 
     def spawn_children(self):
@@ -113,7 +163,7 @@ class GMMHMM:
 
         self.train_set.rnas = None  # Garbage collection
 
-    def score(self, rnas, patterns, fp_score, is_GQ, fp_viterbi, fp_posteriors):
+    def score(self, rnas, patterns, fp_score, is_GQ, do_pvalues, fp_viterbi, fp_posteriors, fp_h0_partial, fp_h0):
         """Scoring phase. Parallelized with respect to RNAs.
 
         Args:
@@ -121,13 +171,12 @@ class GMMHMM:
             patterns (list or Pattern obj): Patterns to be scored
             fp_score (str): Output score file
             is_GQ (bool): Are we scoring G-quadruplexes?
+            do_pvalues (bool): Compute p-values?
             fp_viterbi (str): If set then decode the Viterbi path and output to this file
             fp_posteriors (str): If set then compute hidden state posteriors (gammas) and output to this file
+            fp_h0_partial (str): File were Null distributions with not enough scores are stored
+            fp_h0 (str): File were Null distributions with enough scores are stored
         """
-
-        # Set NaNs to current values of the last EM-step (i.e. no re-initialization of phi)
-        global GLOBALS
-        GLOBALS["nan"] = True
 
         # Spawn a GMMHMM_SingleObs object for each RNA
         self.test_children = []
@@ -145,22 +194,34 @@ class GMMHMM:
                                    patterns=patterns,
                                    fp_score=fp_score,
                                    is_GQ=is_GQ,
+                                   do_pvalues=do_pvalues,
                                    fp_viterbi=fp_viterbi,
-                                   fp_posteriors=fp_posteriors)
+                                   fp_posteriors=fp_posteriors,
+                                   fp_h0_partial=fp_h0_partial,
+                                   fp_h0=fp_h0)
 
-        try:
-            q = pool.imap_unordered(worker, self.test_children)
-            pool.close()
-            pool.join()
-        except:
-            pool.terminate()  # Ensures all children processes are killed if the process doesn't terminate
-            raise
+        max_ = len(self.test_children)
 
-        for _ in q:
-            pass
+        with tqdm(total=max_,
+                  disable=not GLOBALS["verbose"],
+                  leave=False,
+                  unit="transcript",
+                  desc="Current batch  ") as pbar:
+            try:
+
+                q = pool.imap_unordered(worker, self.test_children)
+
+                for _ in q:
+                    pbar.update()
+                # q = pool.imap_unordered(worker, self.test_children)
+                pool.close()
+                pool.join()
+            except:
+                pool.terminate()  # Ensures all children processes are killed if the process doesn't terminate
+                raise
 
     @staticmethod
-    def score_worker(rna, patterns, fp_score, is_GQ, fp_viterbi, fp_posteriors):
+    def score_worker(rna, patterns, fp_score, is_GQ, do_pvalues, fp_viterbi, fp_posteriors, fp_h0_partial, fp_h0):
         """Parallelized worker for the score function."""
 
         rna.get_b()  # Build emissions for this RNA
@@ -169,21 +230,38 @@ class GMMHMM:
         if patterns is not None:
             rna.precompute_logB_ratios()  # Pre-compute single nucleotide emission ratios for pattern scoring
             if is_GQ:
-                gquad_scorer(rna=rna,
-                             fp=fp_score,
-                             min_quartet=patterns[0],
-                             max_quartet=patterns[1],
-                             min_loop=patterns[2],
-                             max_loop=patterns[3])
+                path_repo = gquad_scorer(rna=rna,
+                                         min_quartet=patterns[0],
+                                         max_quartet=patterns[1],
+                                         min_loop=patterns[2],
+                                         max_loop=patterns[3])
             else:
-                pattern_scorer(rna=rna,
-                               fp=fp_score,
-                               patterns=patterns)
+                path_repo = pattern_scorer(rna=rna,
+                                           patterns=patterns)
+
+            if do_pvalues:
+                LOCK.acquire()
+                h0_set = file_handler.h0_fetch(fp=fp_h0_partial)  # Fetch partial h0 scores
+
+                # Score required h0 paths
+                h0_set = patternlib.h0_collect_scores(h0_set=h0_set,
+                                                      path_repo=path_repo,
+                                                      rna=rna)
+
+                # Pull h0 scores to temporary files
+                file_handler.h0_pull(fp=fp_h0,
+                                     fp_partial=fp_h0_partial,
+                                     h0_set=h0_set)
+                LOCK.release()
+
+            # write score out
+            path_repo2scores(fp=fp_score,
+                             rna=rna,
+                             path_repo=path_repo)
 
         if fp_viterbi is not None:
             rna.viterbi_decoding()  # Viterbi algorithm
-            path = rna.viterbi_path["path"]
-            path = "".join([str(i) for i in path])
+            path = "".join([str(i) for i in rna.viterbi_path["path"]])
 
             LOCK.acquire()
             with open(fp_viterbi, "a") as f:
@@ -203,8 +281,6 @@ class GMMHMM:
                 f.write(">{}\n{}".format(rna.name, out_txt))
             LOCK.release()
 
-        return rna
-
     def determine_k(self, N):
         """Determine an optimal K automatically based on training data. Selection is based on Aikaike information
         criteria computed on increasing number of components, i.e. for models of increasing complexity.
@@ -215,7 +291,7 @@ class GMMHMM:
         """
 
         k = 0
-        optimal_aic = np.inf
+        optimal_bic = np.inf
         AICs = []
         found_optimum = False
 
@@ -237,14 +313,14 @@ class GMMHMM:
 
         while found_optimum is False:
             k += 1
-            _, _, _, curr_aic = scikit_gmm_fit(x, k * N)
-            AICs.append(curr_aic)
+            _, _, _, curr_bic = scikit_gmm_fit(x, k * N)
+            AICs.append(curr_bic)
 
-            if optimal_aic <= curr_aic:
+            if optimal_bic <= curr_bic:
                 found_optimum = True
                 # The previous K was optimal, however we will give it some additional room by selecting k+1 as optimal
             else:
-                optimal_aic = curr_aic
+                optimal_bic = curr_bic
 
         return k, AICs
 
@@ -269,6 +345,8 @@ class GMMHMM:
             reference_set (RNAlib): RNAlib object with reference secondary structures in dot-bracket notation.
         """
 
+        # In order: pi + A + mu + sigma + w + phi + upsilon
+        self.n_params = (N - 1) + (N * N - N) + (K * N) + (K * N) + (K * N - N) + N + N
         self.K = K
         self.N = N
         self.states = np.arange(N)
@@ -284,12 +362,12 @@ class GMMHMM:
             # Unsupervised initialization
             # HMM
             self.pi = np.repeat(1 / self.N, self.N) if pi is None else pi
-            self.A = np.array([[0.71020019,  0.28979981],
-                               [0.19677996,  0.80322004]]) if A is None else A
+            self.A = GLOBALS["model"]["A"] if A is None else A
 
             # GMM
             self.unsupervised_GMM_init(mu=mu, sigma=sigma, w=w, w_min=w_min, phi=phi, upsilon=upsilon)
 
+    # noinspection PyUnboundLocalVariable
     def supervised_GMM_init(self, reference_set, w_min):
         """Supervised initialization of the GMM parameters using reference secondary structures.
 
@@ -317,31 +395,54 @@ class GMMHMM:
         x = np.array(x, dtype=GLOBALS["dtypes"]["obs"])
         x[mask_nan | mask_0] = np.nan  # Mask zeros and Nans
 
-        # Split data based on known pairing states and fit a GMM for each state
-        aic = 0
-        mu = []
-        sigma = []
-        w = []
-        phi = []
-        upsilon = []
-
+        # Prepare params
         n = len(x)  # n datapoints
+        found_optimal_k = False
+        curr_K = 2
+        prev_bic = np.inf
 
-        for i in range(self.N):
-            sel = omega == i
+        while not found_optimal_k:
 
-            # Get phi and upsilon
-            phi += [np.sum(mask_nan[sel]) / n]
-            upsilon += [np.sum(mask_0[sel]) / n]
+            curr_mu = []
+            curr_sigma = []
+            curr_w = []
+            curr_phi = []
+            curr_upsilon = []
+            curr_bic = 0
 
-            # Fit GMM
-            curr_x = x[sel]
-            curr_mu, curr_sigma, curr_w, curr_aic = scikit_gmm_fit(curr_x, self.K)
+            # Split data based on known pairing states and fit a GMM for each state
+            for i in range(self.N):
+                sel = omega == i
 
-            mu.append(curr_mu)
-            sigma.append(curr_sigma)
-            w.append(curr_w)
-            aic += curr_aic
+                # Get phi and upsilon
+                curr_phi += [np.sum(mask_nan[sel]) / n]
+                curr_upsilon += [np.sum(mask_0[sel]) / n]
+
+                # Fit GMM
+                curr_x = x[sel]
+                gmm_mu, gmm_sigma, gmm_w, gmm_bic = scikit_gmm_fit(curr_x, curr_K)
+
+                curr_mu.append(gmm_mu)
+                curr_sigma.append(gmm_sigma)
+                curr_w.append(gmm_w)
+                curr_bic += gmm_bic
+
+            if curr_bic >= prev_bic:
+                found_optimal_k = True
+                curr_K -= 2
+
+            else:
+                prev_bic = curr_bic
+
+                mu = curr_mu
+                sigma = curr_sigma
+                w = curr_w
+                phi = curr_phi
+                upsilon = curr_upsilon
+
+                curr_K += 2
+
+        self.K = curr_K
 
         # List to np.arrays
         self.mu = np.array(mu, dtype=GLOBALS["dtypes"]["obs"]).squeeze()
@@ -358,7 +459,7 @@ class GMMHMM:
             self.w = self.w.reshape([-1, 1])
 
     def unsupervised_GMM_init(self, mu=None, sigma=None, w=None, w_min=None, phi=None, upsilon=None):
-        """Supervised initialization of the GMM parameters using reference secondary structures.
+        """Unsupervised initialization of the GMM parameters using reference secondary structures.
 
         Args:
             mu (np.array): Means of the Gaussian components.
@@ -383,7 +484,7 @@ class GMMHMM:
                 self.mu = np.array(np.flip(self.train_set.percentile_obs, 0), dtype=GLOBALS["dtypes"]["obs"])
         else:
             self.mu = mu
-        self.sigma = np.tile(self.train_set.stdev_obs, (self.N, self.K)) if sigma is None else sigma
+        self.sigma = np.tile(self.train_set.sigma_obs, (self.N, self.K)) if sigma is None else sigma
 
         self.w_min = w_min
 
@@ -428,7 +529,7 @@ class GMMHMM:
 
         # Print the current model state to the logger
         if stdout:
-            logger.debug("\n"
+            logger.debug("Training step with K={:d} - Iter {:d}\n"
                          "pi: \n{}\n"
                          "A: \n{}\n"
                          "w: \n{}\n"
@@ -437,7 +538,9 @@ class GMMHMM:
                          "phi: \n{}\n"
                          "upsilon: \n{}\n"
                          "P(states|y): \n{}\n"
-                         "\n".format(repr(self.pi),
+                         "\n".format(self.K,
+                                     self.iter_cnt,
+                                     repr(self.pi),
                                      repr(self.A),
                                      repr(self.w),
                                      repr(self.mu),
@@ -502,7 +605,7 @@ class GMMHMM:
                     curr_plt.add("i={} k={}".format(i, m), y_components[i, m, :],
                                  stroke_style={"width": 2, "dasharray": "2, 2"})
 
-            curr_plt.render_to_file(fp_fit)
+            curr_plt.render_to_png(fp_fit)
 
         # Plot the logL curve
         if fp_logl is not None:
@@ -515,7 +618,7 @@ class GMMHMM:
                                   show_legend=False)
             curr_plt.x_labels = map(str, np.arange(self.iter_cnt) + 1)
             curr_plt.add("logL", self.logL)
-            curr_plt.render_to_file(fp_logl)
+            curr_plt.render_to_png(fp_logl)
 
     # def drop_w(self):
     #     """Drop weights and associated GMM params if at least one w reached 0 in both states."""
@@ -662,24 +765,68 @@ class GMMHMM:
     def train(self, max_iter, epsilon):
         """Train the GMM-HMM using the Baum-Welch EM algorithm until convergence."""
 
+        self.bic = None
         self.logL = []
         self.iter_cnt = 0
-        did_converge = False
+        self.did_converge = False
+        self.did_invert = False
+        curr_logL = np.nan
 
         # Spawn train set children
         self.spawn_children()
 
         # Print initial fit
-        plot_dir = os.path.join(GLOBALS["output"], GLOBALS["output_name"]["training"], "")
-        misclib.make_dir(plot_dir)
-        self.take_snapshot(stdout=GLOBALS["verbose"],
-                           fp_fit=os.path.join(plot_dir, "iter_{0:03d}.svg".format(self.iter_cnt)))
+        # plot_dir = os.path.join(GLOBALS["output"], GLOBALS["output_name"]["training"], "")
+        # misclib.make_dir(plot_dir)
+        self.take_snapshot(stdout=GLOBALS["verbose"])
 
         # Iteration across the EM algorithm until convergence or maximum iterations
-        while ~did_converge & (self.iter_cnt < max_iter):
+        while ~self.did_converge & (self.iter_cnt < max_iter):
+
+            # Print UI message
+            logger.info("Training with K={:d} - iter #{} : logL {:.4g}".format(self.K,
+                                                                               self.iter_cnt,
+                                                                               np.round(curr_logL, 2)))
+
             self.iter_cnt += 1
             curr_logL = self.EM()  # EM step
+
             self.logL.append(curr_logL)
+
+            # Check if the model "inverted" paired/unpaired states (this happened in very rare instances)
+            self.did_invert = False
+            overall_mu = np.sum(self.mu * self.w, axis=1)
+
+            if GLOBALS["pars"]:
+                if overall_mu[0] > overall_mu[1]:
+                    self.did_invert = True
+            else:
+                if overall_mu[1] > overall_mu[0]:
+                    self.did_invert = True
+
+            if self.did_invert:
+
+                # Flip parameters
+                self.pi = np.flip(self.pi, axis=0)
+                self.A = np.flip(self.A, axis=0)
+                self.A = np.flip(self.A, axis=1)
+                self.phi = np.flip(self.phi, axis=0)
+                self.upsilon = np.flip(self.upsilon, axis=0)
+                self.mu = np.flip(self.mu, axis=0)
+                self.sigma = np.flip(self.sigma, axis=0)
+                self.w = np.flip(self.w, axis=0)
+
+                # Update the parameters downstream
+                for rna in self.train_children:
+                    rna.update_parameters(K=self.K,
+                                          pi=self.pi,
+                                          A=self.A,
+                                          phi=self.phi,
+                                          upsilon=self.upsilon,
+                                          mu=self.mu,
+                                          sigma=self.sigma,
+                                          w=self.w)
+                    rna.get_b()
 
             # Check if the model likelihood converged
             if self.iter_cnt >= 5:
@@ -687,19 +834,14 @@ class GMMHMM:
                 delta = np.absolute(delta)
                 convergence_criterion = np.absolute(epsilon * curr_logL)
                 if delta <= convergence_criterion:
-                    did_converge = True
+                    self.did_converge = True
 
             # Log the current model's log likelihood
-            logger.info("iter #{} : logL {}".format(self.iter_cnt, np.round(curr_logL, 2)))
+            self.take_snapshot(stdout=GLOBALS["verbose"])
 
-            self.take_snapshot(stdout=GLOBALS["verbose"],
-                               fp_fit=os.path.join(plot_dir, "iter_{0:03d}.svg".format(self.iter_cnt)))
-
-        # Check if the likelihood converged
-        if not did_converge:
-            logger.warning("patteRNA did not converge within {} iterations. Try increasing --maxiter.\n"
-                           "Last 5 logL -> {}".format(max_iter,
-                                                      np.round(self.logL[-5:], 2)))
+        # Compute the model's AIC
+        self.bic = - 2 * self.logL[-1] + self.n_params * np.log(self.train_set.T -
+                                                                (self.train_set.T_0 + self.train_set.T_nan))
 
 
 # noinspection PyPep8Naming
@@ -1014,38 +1156,93 @@ class GMMHMM_SingleObs:
         Scoring is done by taking the log joint probability ratio between a path and its inverse path. The joint
         probability refers to the probability of path (z) and the data (y) given the model (theta), i.e. P(z,y|theta).
 
+        Returns 0 if the observed reactivities are NaNs across the entire path.
+
         Args:
             path (dict): Contains the path's "start", "end" and the encoding in numerical states "path".
 
         Returns:
             score (float): Log score for the entire path.
+            rejected (bool): Path was rejected because it contains only NaNs
 
         """
 
         score = 0
         t0 = path["start"]
         T = path["end"]
+        rejected = False
 
-        # Consider the P of starting the path
-        i = path["path"][t0]
-        i_inv = self.states_inv[i]  # Inverse path
-        score += np.log(self.alpha[i, t0] / self.alpha[i_inv, t0])
+        if np.all(self.mask_nan[t0:T]):  # Check if the observed values are all NaN
+            score = np.nan
+            rejected = True
+        else:
+            # Consider the P of starting the path
+            i = path["path"][t0]
+            i_inv = self.states_inv[i]  # Inverse path
+            score += np.log(self.alpha[i, t0] / self.alpha[i_inv, t0])
 
-        # Sum the path log joint probability ratio
-        for t in range(t0 + 1, T):
-            j = path["path"][t]
-            j_inv = self.states_inv[j]
+            # Sum the path log joint probability ratio
+            for t in range(t0 + 1, T):
+                j = path["path"][t]
+                j_inv = self.states_inv[j]
 
-            score += self.nuc_logB_ratios[j, t]  # Pre-computed emission ratios
-            score += np.log(self.A[i, j] / self.A[i_inv, j_inv])  # Transitions
+                score += self.nuc_logB_ratios[j, t]  # Pre-computed emission ratios
+                score += np.log(self.A[i, j] / self.A[i_inv, j_inv])  # Transitions
 
-            i = j
-            i_inv = j_inv
+                i = j
+                i_inv = j_inv
 
-        # Consider the P of ending the path
-        score += np.log(self.beta[i, T - 1] / self.beta[i_inv, T - 1])
+            # Consider the P of ending the path
+            score += np.log(self.beta[i, T - 1] / self.beta[i_inv, T - 1])
 
-        return score
+        return score, rejected
+
+    # WIP
+    # def score_path_over_path(self, path, path_comp):
+    #     """Score a defined path.
+    #
+    #     Scoring is done by taking the log joint probability ratio between a path and its inverse path. The joint
+    #     probability refers to the probability of path (z) and the data (y) given the model (theta), i.e. P(z,y|theta).
+    #
+    #     Args:
+    #         path (dict): Contains the path's "start", "end" and the encoding in numerical states "path".
+    #         path_comp (dict): Same as path, but contains the path to compare against.
+    #
+    #     Returns:
+    #         score (float): Log score for the entire path.
+    #
+    #     """
+    #
+    #     score = 0
+    #
+    #     t0 = path["start"]
+    #     T = path["end"]
+    #
+    #     if not (path_comp["start"] == t0 and path_comp["end"] == T):
+    #         logger.error("Paths being compared have different starts and/or end indices.")
+    #         score = np.nan
+    #         return score
+    #
+    #     # Consider the P of starting the path
+    #     i = path["path"][t0]
+    #     i_comp = path_comp["path"][t0]  # Compared path
+    #     score += np.log(self.alpha[i, t0] / self.alpha[i_comp, t0])
+    #
+    #     # Sum the path log joint probability ratio
+    #     for t in range(t0 + 1, T):
+    #         j = path["path"][t]
+    #         j_comp = path_comp["path"][t]
+    #
+    #         score += self.nuc_logB_ratios[j, t]  # Pre-computed emission ratios
+    #         score += np.log(self.A[i, j] / self.A[i_comp, j_comp])  # Transitions
+    #
+    #         i = j
+    #         i_comp = j_comp
+    #
+    #     # Consider the P of ending the path
+    #     score += np.log(self.beta[i, T - 1] / self.beta[i_comp, T - 1])
+    #
+    #     return score
 
 
 def global_config(**kwargs):
@@ -1063,7 +1260,7 @@ def global_config(**kwargs):
             else:
                 GLOBALS[key] = value
 
-    logger.info("Running patteRNA using {} parallel processes.".format(GLOBALS["n_tasks"]))
+    logger.info("Using {} parallel processes".format(GLOBALS["n_tasks"]))
 
 
 def elog(x):
@@ -1100,17 +1297,21 @@ def path_repo2scores(fp, rna, path_repo):
     out_txts = []
 
     for curr_path in path_repo:
-        score = rna.score_path(curr_path)
+        score, _ = rna.score_path(curr_path)
 
         path_iv = range(curr_path["start"], curr_path["end"])
-        path = [str(i) for i in curr_path["path"][path_iv]]
-        out_txts.append("{} {:d} {:d} {:.3g} {} {} {}\n".format(rna.name,
-                                                                curr_path["start"],
-                                                                curr_path["end"],
-                                                                score,
-                                                                curr_path["dot"],
-                                                                "".join(path),
-                                                                "".join(np.array(list(rna.seq))[path_iv])))
+        path = "".join([str(i) for i in curr_path["path"][path_iv]])
+
+        out_txts.append("{} {:d} {:d} {:.3g} "
+                        "{:.3g} {} {} {}\n".format(rna.name,
+                                                   curr_path["start"],
+                                                   curr_path["end"],
+                                                   score,
+                                                   np.nan,
+                                                   # np.nan,
+                                                   curr_path["dot"],
+                                                   path,
+                                                   "".join(np.array(list(rna.seq))[path_iv])))
 
     LOCK.acquire()
     with open(fp, "a") as f:
@@ -1119,17 +1320,53 @@ def path_repo2scores(fp, rna, path_repo):
     LOCK.release()
 
 
+# def path_repo2scores(fp, rna, path_repo, null_stats):
+#     """Score all paths in a repository and write to output"""
+#     out_txts = []
+#
+#     for curr_path in path_repo:
+#         score, _ = rna.score_path(curr_path)
+#
+#         path_iv = range(curr_path["start"], curr_path["end"])
+#         path = "".join([str(i) for i in curr_path["path"][path_iv]])
+#
+#         p = np.nan
+#         if null_stats is not None:  # If a Null distribution is available
+#             score = z_score(x=score,
+#                             mean=null_stats[path]["mu"],
+#                             stdev=null_stats[path]["std"])
+#             # Compute the p-value under the assumption of a Normal Gaussian centered at 0 and with unit variance
+#             p = norm.sf(score)
+#
+#         out_txts.append("{} {:d} {:d} {:.3g} {:.3g} {} {} {}\n".format(rna.name,
+#                                                                        curr_path["start"],
+#                                                                        curr_path["end"],
+#                                                                        score,
+#                                                                        p,
+#                                                                        curr_path["dot"],
+#                                                                        path,
+#                                                                        "".join(np.array(list(rna.seq))[path_iv])))
+#
+#     LOCK.acquire()
+#     with open(fp, "a") as f:
+#         for out_txt in out_txts:
+#             f.write(out_txt)
+#     LOCK.release()
+
+
 def write_score_header(fp):
     """Write the output scoring file header."""
 
     with open(fp, "w") as f:
-        header = "{} {} {} {} {} {} {}\n".format("transcript",
-                                                 "start",
-                                                 "end",
-                                                 "score",
-                                                 "dot-bracket",
-                                                 "path",
-                                                 "seq")
+        header = "{} {} {} {} {} {} {} {}\n".format("transcript",
+                                                    "start",
+                                                    "end",
+                                                    "score",
+                                                    "c-score",
+                                                    # "p-value",
+                                                    "dot-bracket",
+                                                    "path",
+                                                    "seq")
         f.write(header)
 
 
@@ -1179,12 +1416,11 @@ def pool_init():
     return pool
 
 
-def gquad_scorer(rna, fp, min_quartet=1, max_quartet=5, min_loop=1, max_loop=20):
+def gquad_scorer(rna, min_quartet=1, max_quartet=5, min_loop=1, max_loop=20):
     """Score G_quadruplexes.
 
     Args:
         rna (GMMHMM_SingleObs obj): Current RNA to be processed
-        fp (str): Pointer to the output file holding scores.
         min_quartet (int): Minimum number of quartets allowed.
         max_quartet (int): Maximum number of quartets allowed.
         min_loop (int): Minimum length of loops.
@@ -1198,18 +1434,15 @@ def gquad_scorer(rna, fp, min_quartet=1, max_quartet=5, min_loop=1, max_loop=20)
                                                max_quartet=max_quartet,
                                                min_loop=min_loop,
                                                max_loop=max_loop)
-    # Realize paths (can be empty)
-    path_repo2scores(fp, rna, path_repo)
 
-    return None
+    return path_repo
 
 
-def pattern_scorer(rna, fp, patterns):
+def pattern_scorer(rna, patterns):
     """Score motif patterns.
 
     Args:
         rna (GMMHMM_SingleObs obj): Current RNA to be processed
-        fp (str): Pointer to the output file holding scores.
         patterns (Patterns): All possible patterns given the dot-bracket RegEx.
 
     """
@@ -1242,11 +1475,7 @@ def pattern_scorer(rna, fp, patterns):
                                       "path": path,
                                       "dot": pattern.dot})
 
-        # Realize all possible paths (can be empty) - Writing this after each patterns to avoid memory leaks
-        path_repo2scores(fp, rna, path_repo)
-        path_repo = []  # Flush the path repository
-
-    return None
+    return path_repo
 
 
 # noinspection PyPep8Naming
@@ -1302,7 +1531,7 @@ def scikit_gmm_fit(x, k):
         mu (np.array): Components means
         sigma (np.array): Components variances
         w (np.array): Components weights
-        aic (float): Aikaike information criterion
+        bic (float): Bayesian information criterion
 
     """
 
@@ -1315,7 +1544,85 @@ def scikit_gmm_fit(x, k):
     gmm = GaussianMixture(n_components=k, covariance_type="spherical", init_params="random")
     gmm.fit(x)
 
-    return gmm.means_, gmm.covariances_, gmm.weights_, gmm.aic(x)
+    return gmm.means_, gmm.covariances_, gmm.weights_, gmm.bic(x)
+
+
+def get_z_score(x, mean, std):
+    """Compute Z-scores for x.
+
+    Args:
+        x (float or np.array): Value or vector for which the Z-score is computed
+        mean (float): Mean
+        std (float): Standard deviation
+
+    """
+
+    if np.isnan(std):
+        z = np.nan
+    else:
+        z = (x - mean) / std
+
+    return z
+
+
+def compute_and_write_p_values(fp_h0, fp_in, fp_out):
+    # Read Null scores and remove the temporary file
+    h0_path_set = file_handler.h0_fetch(fp_h0)
+
+    # Compute Null params
+    h0_params = patternlib.h0_fit(h0_path_set)
+
+    with open(fp_in, "r") as f, open(fp_out, "w") as f_out:
+        header = f.readline()
+        f_out.write(header)
+
+        lines = []
+        log_c_scores = []
+
+        for line in f:
+            fields = line.split()
+            score = np.float(fields[3])
+            path = fields[6]
+
+            c = beta.sf(score,
+                        a=h0_params[path]["a"],
+                        b=h0_params[path]["b"],
+                        loc=h0_params[path]["loc"],
+                        scale=h0_params[path]["scale"])
+
+            if c == 0:
+                log_c = np.Inf
+            else:
+                log_c = -np.log10(c)
+
+            # Write c-score to file on the fly
+            fields[4] = "{:.3g}".format(log_c)
+            txt = " ".join(fields)
+            f_out.write("{}\n".format(txt))
+
+            # If c is NaN then we can skip the p-value computation and write to file as we will sort it later
+            # if np.isnan(log_c):
+            #     f_out.write(line)
+            # else:
+            #     log_c_scores.append(log_c)
+            #     # p_values.append(norm.sf(log_c))
+            #     lines.append(line)
+
+            # if len(p_values) > 0:
+            #     # todo FDR correction on the p-values with 95% CI
+            #     fdr_res = multipletests(pvals=p_values,
+            #                             alpha=0.05,
+            #                             method="fdr_bh",
+            #                             is_sorted=False)
+            #     p_values = fdr_res[1]
+
+        # for line, lc in zip(lines, log_c_scores):
+        #     fields = line.split()
+        #     fields[4] = "{:.3g}".format(lc)
+        #     # fields[5] = "{:.2E}".format(p)
+        #
+        #     txt = " ".join(fields)
+        #     f_out.write("{}\n".format(txt))
 
 
 if __name__ == '__main__':

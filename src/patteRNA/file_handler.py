@@ -5,7 +5,8 @@ import regex
 import shutil
 import os
 
-from . import globalbaz, patternlib
+from . import globalbaz
+from . import patternlib
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
@@ -75,7 +76,9 @@ def read_observations(fp):
     for tr_name, field in file_content.items():
         obs = field.strip().split()
         obs = [word.replace('NA', 'nan') for word in obs]  # Handle NA
-        rnas[tr_name] = np.array(obs, dtype=GLOBALS["dtypes"]["obs"])
+        obs = np.array(obs, dtype=GLOBALS["dtypes"]["obs"])
+        obs[np.isinf(obs)] = np.nan  # Handle infinite values
+        rnas[tr_name] = obs
 
     return rnas
 
@@ -196,26 +199,38 @@ def check_overwrites(args, switch):
 
     # Check that no file overwriting will occur
     overwrite_files = False
+    delete_model = False
+    delete_fit_plot = False
+    delete_logL_plot = False
+    delete_scores = False
     delete_viterbi = False
     delete_posteriors = False
-    delete_training = False
 
     if os.path.isdir(args.output):  # Output directory already exist
         if switch["do_training"]:
-            if os.path.isdir(os.path.join(args.output, GLOBALS["output_name"]["training"])):
-                overwrite_files = True
-                delete_training = True
+            # if os.path.isdir(os.path.join(args.output, GLOBALS["output_name"]["training"])):
+            #     overwrite_files = True
+            #     delete_training = True
             if os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["model"])):
+                delete_model = True
+                overwrite_files = True
+            if os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["fit_plot"])):
+                delete_fit_plot = True
+                overwrite_files = True
+            if os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["logL_plot"])):
+                delete_logL_plot = True
                 overwrite_files = True
 
+        if switch["do_scan"] and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["scores"])):
+            delete_scores = True
+            overwrite_files = True
         if args.posteriors and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["posteriors"])):
             delete_posteriors = True
             overwrite_files = True
         if args.viterbi and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["viterbi"])):
             delete_viterbi = True
             overwrite_files = True
-        if switch["do_scan"] and os.path.isfile(os.path.join(args.output, GLOBALS["output_name"]["scores"])):
-            overwrite_files = True
+
     else:
         pass
 
@@ -227,13 +242,22 @@ def check_overwrites(args, switch):
                 response = input("Some output files already exist. Overwrite them? [yes/no] ")
 
             if response in GLOBALS["user_prompt"]["yes"]:
-                if delete_training:
-                    shutil.rmtree(os.path.join(args.output, GLOBALS["output_name"]["training"]), ignore_errors=False)
+                # if delete_training:
+                #     shutil.rmtree(os.path.join(args.output, GLOBALS["output_name"]["training"]), ignore_errors=False)
+                if delete_model:
+                    os.remove(os.path.join(args.output, GLOBALS["output_name"]["model"]))
+                if delete_fit_plot:
+                    os.remove(os.path.join(args.output, GLOBALS["output_name"]["fit_plot"]))
+                if delete_logL_plot:
+                    os.remove(os.path.join(args.output, GLOBALS["output_name"]["logL_plot"]))
+                if delete_scores:
+                    os.remove(os.path.join(args.output, GLOBALS["output_name"]["scores"]))
                 if delete_posteriors:
                     os.remove(os.path.join(args.output, GLOBALS["output_name"]["posteriors"]))
                 if delete_viterbi:
                     os.remove(os.path.join(args.output, GLOBALS["output_name"]["viterbi"]))
                 break
+
             elif response in GLOBALS["user_prompt"]["no"]:
                 sys.exit()
         else:
@@ -254,37 +278,124 @@ def write_shape(fp, shape):
                     f.write("{} {:.4f}\n".format(nuc + 1, shape[nuc]))
 
 
-def sort_score_file(fp_in, fp_out):
-    """Sort the score.txt output file by scores.
+def h0_pull(fp, fp_partial, h0_set):
+    """Write h0 to temporary files.
+
+    Here we will split paths for which enough h0 paths were scored (written to fp) and paths for which additional
+    h0 scores are required (written to fp_partial).
+
+    Completed h0 paths will be reported in the partial file as a space-delimited string after a dummy path titled ">".
+
+    """
+
+    h0_list = []
+
+    with open(fp_partial, "w") as f_partial, open(fp, "a") as f:
+
+        for path, scores in h0_set.items():
+            if scores is None:  # Means we already have enough h0 info for this path
+                h0_list.append(path)
+            else:
+                txt = " ".join([str(x) for x in scores])
+
+                if len(scores) == GLOBALS["h0_max_size"]:  # We reached enough h0 scores if this is true
+                    f.write("{}\n{}\n".format(path, txt))
+                    h0_list.append(path)
+                else:
+                    f_partial.write("{}\n{}\n".format(path, txt))
+
+        # Write the list of paths with completed h0 in the partial file with title ">"
+        txt = " ".join(h0_list)
+        f_partial.write(">\n{}\n".format(txt))
+
+
+def h0_fetch(fp):
+    """Fetch h0 scores from a temporary file."""
+
+    h0_paths = {}
+    try:
+        with open(fp, "r") as f:
+
+            while True:
+
+                line1 = f.readline()
+                line2 = f.readline()
+
+                if not line2:
+                    break
+
+                path = line1.strip()
+
+                if path.startswith(">"):  # Means we are reading the list of completed paths in the partial file
+                    cpaths = line2.strip().split()
+                    for cpath in cpaths:
+                        h0_paths[cpath] = None  # Completed paths gets None scores to ease further processing
+                else:
+                    scores = list(np.array(line2.strip().split(), dtype=globalbaz.GLOBALS["dtypes"]["p"]))
+                    h0_paths[path] = scores
+
+    except FileNotFoundError:
+        pass
+
+    return h0_paths
+
+
+def h0_merge(fp, fp_partial):
+    """Merge the partial h0 file into the complete h0 files."""
+
+    h0_partial = h0_fetch(fp_partial)
+    h0 = h0_fetch(fp)
+
+    with open(fp, "a") as f:
+
+        for path, scores in h0_partial.items():
+            if path not in h0.keys():
+                txt = " ".join([str(x) for x in scores])
+                f.write("{}\n{}\n".format(path, txt))
+
+
+def sort_score_file(fp_in, fp_out, column_ix=4, decreasing=False):
+    """Sort the scores.txt output file by p-values.
 
     Args:
-        fp_in (str): Input unsorted score.txt file path
-        fp_out (str): Output sorted score.txt file path
+        fp_in (str): Input unsorted scores.txt file path
+        fp_out (str): Output sorted scores.txt file path
+        column_ix (int): Sort by this column index (default is by p-values).
+        decreasing (bool); Sort in decreasing order?
 
     """
 
     # Read input score and sort
     with open(fp_in, "r") as f:
         header = f.readline()
-        scores = []
+        vals = []
         lines = []
+        scores = []
 
         for line in f:
             lines.append(line)
-            scores.append(line.split()[3])
+            vals.append(line.split()[column_ix])
+            scores.append(line.split()[4])
 
-    sort_ix = np.argsort(np.array(scores, dtype=GLOBALS["dtypes"]["p"]))
-    sort_ix = np.flipud(sort_ix)  # To get decreasing sorted scores
+    if decreasing:
+        sort_ix = np.argsort(-np.array(vals, dtype=GLOBALS["dtypes"]["p"]))
+    else:
+        sort_ix = np.argsort(np.array(vals, dtype=GLOBALS["dtypes"]["p"]))
 
-    os.remove(fp_in)
-
+    max_score = None
+    scores = np.array(scores, dtype='float64')
     # Output sorted scores
     with open(fp_out, "w") as f:
         f.write(header)
 
         for i in sort_ix:
-            f.write(lines[i])
-
+            newline = lines[i].split()
+            if newline[4] == "inf":
+                if max_score is None:
+                    mask = np.array(np.isfinite(np.array(scores, dtype=GLOBALS["dtypes"]["p"])))
+                    max_score = np.max(scores[mask])
+                newline[4] = str(max_score)
+            f.write(" ".join(newline)+"\n")
 
 # def read_and_sort_scores(fp, by=None, descending=False, formats=None):
 #     """Return a sorted numpy array from a patteRNA score.txt output file.

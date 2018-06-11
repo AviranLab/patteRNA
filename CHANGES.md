@@ -4,6 +4,29 @@ All notable changes to patteRNA are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- ## Unreleased -->
+## [1.2.0] - 2018-06-11
+- Supervised initialization of Model's parameters based on reference RNA secondary structures in dot-bracket notation supplied via the new `--reference` flag. Note that `--reference` supports RNAstructure's `ct2dot` output format. [ML]
+- Simulation framework for testing (devs only). [ML]
+- Scoring motifs now returns, by default, a c-score based on a fitted Null distribution in addition to the original score. [PR/ML]
+- Flag `--no-cscores` to turn off the computation of c-scores. [ML]
+- The training set is now built automatically using KL divergence metrics (via option `--KL-div`). Data-dense transcripts are prioritized. [ML]
+- Infinite values in structure profiles are now supported. [ML]
+- Added a checkpoint to ensure paired/unpaired states are never flipped in the model. [ML]
+- Dependencies: `cairosvg` (needed by `pygal`). [ML]
+- Dependencies: `matplotlib`. [ML]
+
+### Changed
+- Motifs were all observations are missing now return NaN scores. [ML]
+- Progress bar during scoring tracks individual transcripts instead of batches. [PR]
+- The behavior of the `--min-density/-d` CLI flag was changed to affect both training and scoring. [ML]
+- The default value for the `--min-density/-d` CLI flag was changed to 0 (i.e. all transcripts are used by default). [ML]
+- Now renders all plots as PNG instead of SVG. [ML]
+- Re-vamped user messages printed during the task. [ML]
+
+### Removed
+- Removed `-n` CLI flag (obsolete). [ML]
+- Removed `--filter-test` CLI flag (obsolete). [ML]
+
 
 ## [1.1.4] - 2018-02-13
 ### Fixed

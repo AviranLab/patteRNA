@@ -123,6 +123,7 @@ def make_batches(n, batch_size, stochastic=False):
         sel (np.array): Array with each column being a boolean mask for selecting a single batch.
 
     """
+
     n = int(n)
     n_batches = int(np.ceil(n / batch_size))
     # noinspection PyTypeChecker
