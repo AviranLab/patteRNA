@@ -30,7 +30,7 @@ sudo python3 -m pip install -U pip setuptools
 Installation is done directly from source. For that, clone this repository using the commands:
 
 ```
-git clone git@github.com:AviranLab/patteRNA.git
+git clone https://github.com/AviranLab/patteRNA.git
 cd patteRNA
 ```
 
