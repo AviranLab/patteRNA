@@ -6,6 +6,7 @@ import yaml
 import numpy as np
 
 from . import globalbaz
+from . import _version
 
 
 def parse_cl_args(inputargs):
@@ -16,7 +17,7 @@ def parse_cl_args(inputargs):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version",
                         action="version",
-                        version="%(prog)s 1.2.0")
+                        version="%(prog)s {}".format(_version.__version__))
     parser.add_argument("input",
                         metavar="probing",
                         type=str,

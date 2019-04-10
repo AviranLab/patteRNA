@@ -40,8 +40,8 @@ GLOBALS["output_name"] = {"scores": "scores.txt",
                           "viterbi": "viterbi.txt",
                           "training": "iterative_learning",
                           "model": "trained_model.pickle",
-                          "fit_plot": "fit.png",
-                          "logL_plot": "logL.png"}
+                          "fit_plot": "fit.svg",
+                          "logL_plot": "logL.svg"}
 
 # Memory configs
 GLOBALS["dtypes"] = {"obs": np.float32,

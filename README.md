@@ -27,28 +27,25 @@ sudo python3 -m pip install -U pip setuptools
 
 ### Installation
 
-You can install patteRNA directly from source. First, download the distribution tarball by entering the command:
+Installation is done directly from source. For that, clone this repository using the commands:
 
 ```
-wget https://raw.github.com/AviranLab/patteRNA/master/dist/patteRNA-latest.tar.gz
+git clone git@github.com:AviranLab/patteRNA.git
+cd patteRNA
 ```
 
-Once downloaded, extract the tarball and move into the extracted folder:
-
-```
-tar -xzf patteRNA-latest.tar.gz
-cd patteRNA-latest
-```
-
-Run the installation by entering the command:
+If you do have `sudo` permissions, such as on a personal laptop, then use the command:
 
 ```
 sudo python3 setup.py install
 ```
 
-You should now be able to call patteRNA as an executable from anywhere. If it failed, make sure `pip` and `setuptools` are up-to-date, see [Prerequisites](#prerequisites)
+Otherwise, run a local installation using the commands:
 
-> For more advanced users, the use of a virtual python environment is recommended (see [venv](https://docs.python.org/3/library/venv.html#module-venv) and [pyenv](https://github.com/pyenv/pyenv)). By default, the binary is created in the `bin` folder of the active python distribution. To change this behavior, use the command `python3 setup.py install --install-script=<DEST>` where `<DEST>` is the destination folder. If you do this, don't forget to add `<DEST>` to your `$PATH` variable so the binary is discoverable by the OS.
+```
+python3 setup.py install --user
+echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc; source ~/.bashrc
+```
 
 ### Running a test
 
@@ -61,10 +58,10 @@ patteRNA --version
 This should output the current version of patteRNA. You can now do a test by entering the following command:
 
 ```
-patteRNA sample_data/weeks_set.shape dummy_test -f sample_data/weeks_set.fa -vl --motif "((..))"
+patteRNA sample_data/weeks_set.shape test -f sample_data/weeks_set.fa -vl --motif "((..))"
 ```
 
-This will run patteRNA in verbose mode (`-v`) and create an output directory `dummy_test` in the current folder.
+This will run patteRNA in verbose mode (`-v`) and create an output directory `test` in the current folder.
 
 
 
@@ -163,12 +160,12 @@ The type of experimental assay is automatically detected using the `<probing>` f
 By default, patteRNA will learn its model from the data. Run an example training phase using the command:
 
 ```
-patteRNA sample_data/weeks_set.shape dummy_test -vl
+patteRNA sample_data/weeks_set.shape test -vl
 ```
 
-> If you ran the test during installation, you will be prompted about overwriting files in the existing directory `dummy_test`. Answer `yes`. Note that in this example we run patteRNA in verbose-mode (`-v`) and we log transform (`-l`) the input data.
+> If you ran the test during installation, you will be prompted about overwriting files in the existing directory `test`. Answer `yes`. Note that in this example we run patteRNA in verbose-mode (`-v`) and we log transform (`-l`) the input data.
 
-This command will generate an output folder `dummy_test` in the current directory which contains:
+This command will generate an output folder `test` in the current directory which contains:
 
 - A log file: `<date>.log`
 - Parameters of the trained model (not meant to be read by humans): `trained_model.pickle`
@@ -208,19 +205,19 @@ The posterior probabilities of pairing states at each nucleotides can be request
 * Train the model and search for any loop of length 5:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --motif ".{5}" -f sample_data/weeks_set.fa
+    patteRNA sample_data/weeks_set.shape test -vl --motif ".{5}" -f sample_data/weeks_set.fa
     ```
 
 * Search for all loops of length 5 using a trained model:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --motif ".{5}" -f sample_data/weeks_set.fa
+    patteRNA sample_data/weeks_set.shape test -vl --model test/trained_model.pickle --motif ".{5}" -f sample_data/weeks_set.fa
     ```
 
 * Search for all enclosed loops (i.e. neighbored by paired nucleotides, but constrained to be paired together) of length 5 using a trained model:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --path "10{5}1"
+    patteRNA sample_data/weeks_set.shape test -vl --model test/trained_model.pickle --path "10{5}1"
     ```
 
     > Note that the considered path in this case is `1000001` when written in its full format.
@@ -228,13 +225,13 @@ The posterior probabilities of pairing states at each nucleotides can be request
 * Search for hairpins of variable stem size 4 to 6 and loop size 5:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle -f sample_data/weeks_set.fa --motif "({4,6}.{5}){4,6}"
+    patteRNA sample_data/weeks_set.shape test -vl --model test/trained_model.pickle -f sample_data/weeks_set.fa --motif "({4,6}.{5}){4,6}"
     ```
 
 * Request the Viterbi path and the Posterior state probabilities using a trained model:
 
     ```
-    patteRNA sample_data/weeks_set.shape dummy_test -vl --model dummy_test/trained_model.pickle --viterbi --posteriors
+    patteRNA sample_data/weeks_set.shape test -vl --model test/trained_model.pickle --viterbi --posteriors
     ```
 
 > Note that in the examples provided above we use the same probing data file for both training and scoring. However, one can train the model and score motifs using two different files (e.g. to use a defined set of transcripts for training).

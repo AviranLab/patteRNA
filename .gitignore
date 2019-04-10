@@ -7,8 +7,6 @@
 .docs/
 release.sh
 requirements.txt
-setup.cfg
-setup.py
 __pycache__/
 build/
 dist/patteRNA-1.0.0-py3.5.egg
@@ -17,4 +15,5 @@ tests/
 htmlcov/
 analytics/
 sphinx/
-
+dist/
+test/

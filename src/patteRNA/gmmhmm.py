@@ -605,7 +605,7 @@ class GMMHMM:
                     curr_plt.add("i={} k={}".format(i, m), y_components[i, m, :],
                                  stroke_style={"width": 2, "dasharray": "2, 2"})
 
-            curr_plt.render_to_png(fp_fit)
+            curr_plt.render_to_file(fp_fit)
 
         # Plot the logL curve
         if fp_logl is not None:
@@ -618,7 +618,7 @@ class GMMHMM:
                                   show_legend=False)
             curr_plt.x_labels = map(str, np.arange(self.iter_cnt) + 1)
             curr_plt.add("logL", self.logL)
-            curr_plt.render_to_png(fp_logl)
+            curr_plt.render_to_file(fp_logl)
 
     # def drop_w(self):
     #     """Drop weights and associated GMM params if at least one w reached 0 in both states."""

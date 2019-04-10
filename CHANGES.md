@@ -4,6 +4,13 @@ All notable changes to patteRNA are documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- ## Unreleased -->
+## [1.2.1] - 2019-04-09
+### Changed
+- Installation procedure. [ML]
+
+### Removed
+- Dependence on `cairosvg` which posed installation issues. [ML]
+
 ## [1.2.0] - 2018-06-11
 - Supervised initialization of Model's parameters based on reference RNA secondary structures in dot-bracket notation supplied via the new `--reference` flag. Note that `--reference` supports RNAstructure's `ct2dot` output format. [ML]
 - Simulation framework for testing (devs only). [ML]
