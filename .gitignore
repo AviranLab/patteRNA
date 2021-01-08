@@ -17,3 +17,4 @@ analytics/
 sphinx/
 dist/
 test/
+*venv/
