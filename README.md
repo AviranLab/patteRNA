@@ -262,8 +262,8 @@ We use the [SemVer](http://semver.org/) convention for versioning. For the versi
 
 ## Contributors
 
-* [**Mirko Ledda**](https://mirkoledda.github.io/) - *Initial implementation and developer*
-* [**Pierce Radecki**](https://github.com/peradecki) - *Developer*
+* [**Mirko Ledda**](https://mirkoledda.github.io/) - *Initial implementation*
+* [**Pierce Radecki**](https://github.com/peradecki) - *Maintainer and developer*
 * [**Sharon Aviran**](https://bme.ucdavis.edu/aviranlab/) - *Supervisor*
 
 
