@@ -1,3 +1,11 @@
+## *patteRNA 2.0 is coming soon.*
+
+**Update Feburary 2021**: patteRNA 2.0 involved a bottom-up rewrite of the module in addition to several new features and other various improvements related to the practical interpretation of its results. Look for the first official release in the coming days!
+
+The release of version 2 will coincide with the final stable release of version 1 (v.1.3.0).
+
+
+
 # patteRNA
 
 Rapid mining of RNA secondary structure motifs from structure profiling data.
