@@ -3,20 +3,30 @@ All notable changes to patteRNA are documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-<!-- #Unreleased -->
+
+## [2.0.0] - 2021-02-23
+### Changed
+- Major version release will almost a full rewrite of the method. [PR]
+- Addition of `--HDSL` flag to compute local structure levels. [PR]
+- Addition of a new Discretized Observation Model (DOM) emission model scheme, which is more precise for scoring and faster than a GMM. [PR]
+- New c-score distribution sampling procedure is much more efficient than before. [PR]
+- Now using human-readable `.json` format for saving a loading trained models. [PR]
+- Matplotlib backend to `svg`. [PR]
+- Dependencies: `humanfriendly`. [PR]
+
+### Removed
+- Temporarily removed `--reference` and `--config` options. [PR]
+
 ## [1.2.2] - 2020-01-08
 ### Changed
 - Updated sample data with corrected structures. [PR]
-- Updated README to address installation issues on macOS Big Sur.
 - Updated README to reflect current developers. [PR]
+- Fixed sample data. [PR]
 
 ## [1.2.1] - 2019-04-10
 ### Changed
 - Installation procedure. [ML]
 - Matplotlib backend to `Agg`. [ML]
-
-### Removed
-- Dependence on `cairosvg` which posed installation issues. [ML]
 
 ## [1.2.0] - 2018-06-11
 - Supervised initialization of Model's parameters based on reference RNA secondary structures in dot-bracket notation supplied via the new `--reference` flag. Note that `--reference` supports RNAstructure's `ct2dot` output format. [ML]

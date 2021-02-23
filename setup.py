@@ -20,8 +20,8 @@ setup(
     description="Rapid mining of RNA secondary structure motifs from profiling data.",
     long_description=long_description,
     url="https://github.com/AviranLab/patteRNA",
-    author="Mirko Ledda",
-    author_email="maledda@ucdavis.edu",
+    author="Pierce Radecki",
+    author_email="peradecki@ucdavis.edu",
     license="BSD-2",
     keywords="RNA structure mining",
 
@@ -45,6 +45,7 @@ setup(
     install_requires=[
         "appdirs",
         "exrex",
+        "humanfriendly",
         "numpy",
         "matplotlib",
         "packaging",
