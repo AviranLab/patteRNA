@@ -63,6 +63,16 @@ python3 setup.py install --user
 echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc; source ~/.bashrc
 ```
 
+*Note for macOS Big Sur users:* Due to an issue, you must use `pip` to run the installation. Use the commands:
+
+```
+python3 -m pip install .
+```
+or
+```
+python3 -m pip install . --user
+```
+
 ### Running a test
 
 To make sure patteRNA is properly installed, run the following command:
