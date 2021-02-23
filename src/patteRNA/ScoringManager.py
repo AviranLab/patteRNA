@@ -291,12 +291,12 @@ def score_path(transcript, start, path, motif):
     m = len(path)
     end = start + m - 1
 
-    if np.all(np.isnan(transcript.obs[start:end])):
+    if np.all(np.isnan(transcript.obs[start:end+1])):
         score = np.nan
     else:
         score = 0
         score += np.log(transcript.alpha[path[0], start] / transcript.alpha[1 - path[0], start])
-        score += np.sum(transcript.log_B_ratio[path[1:-1], start + 1:end])
+        score += np.sum((2*path[1:-1] - 1)*transcript.log_B_ratio[1, start + 1:end])
         score += np.log(transcript.beta[path[-1], end] / transcript.beta[1 - path[-1], end])
     return {'score': score,
             'c-score': None,
