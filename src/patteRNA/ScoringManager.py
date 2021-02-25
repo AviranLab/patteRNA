@@ -18,7 +18,7 @@ class ScoringManager:
     def __init__(self, model, run_config):
         self.model = model
         self.run_config = run_config
-        self.mp_tasks = 4
+        self.mp_tasks = run_config['n_tasks']
         self.mp_pool = None
         self.motifs = None
         self.cscore_dists = None

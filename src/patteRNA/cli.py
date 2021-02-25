@@ -68,7 +68,7 @@ def main():
                                                                       training_set.stats['n_obs'],
                                                                       kl_div))
 
-        tm = TrainingManager(model=model, mp_tasks=4, output_dir=run_config['output'], k=run_config['k'])
+        tm = TrainingManager(model=model, mp_tasks=run_config['n_tasks'], output_dir=run_config['output'], k=run_config['k'])
         tm.import_data(training_set)
 
         clock.tick()
