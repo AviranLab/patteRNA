@@ -195,6 +195,7 @@ def parse_cl_args(inputargs):
     if run_config['n_tasks'] == -1:
         run_config['n_tasks'] = multiprocessing.cpu_count()
 
+
     return input_files, run_config
 
 

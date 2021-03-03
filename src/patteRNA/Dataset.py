@@ -42,7 +42,7 @@ class Dataset:
             if self.fp_fasta:
                 self.rnas[rna_name] = Transcript(rna_name, sequences_dict[rna_name], observations_dict[rna_name])
             else:
-                self.rnas[rna_name] = Transcript(rna_name, None, observations_dict[rna_name])
+                self.rnas[rna_name] = Transcript(rna_name, 'N'*len(observations_dict[rna_name]), observations_dict[rna_name])
 
         if log_flag:
             for rna in self.rnas:

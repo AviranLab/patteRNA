@@ -28,18 +28,18 @@ class DOM:
 
         k = k + 5
 
-        qbin_sizes = 1 / (k + 1)  # Quantile sizes
-        qbin_edges = qbin_sizes*np.arange(1, k + 1)  # Edge locations (in quantile terms)
+        qbin_sizes = 0.5 / k  # Quantile sizes
+        qbin_edges = 0.25 + qbin_sizes*np.arange(0, k+1)  # Edge locations (in quantile terms)
 
         bin_edges = np.interp(qbin_edges, stats['quantile_basis'], stats['quantiles'])
 
         self.k = k
         self.n_bins = k + 2
-        self.classes = list(range(1, self.n_bins + 1))
+        self.classes = list(range(1, self.n_bins + 2))
         self.edges = [-np.Inf] + [edge for edge in bin_edges] + [np.Inf]
-        self.chi = np.zeros((2, self.n_bins))
+        self.chi = np.zeros((2, self.n_bins + 1))
 
-        dist = np.linspace(2, 1, self.n_bins-1)  # Bins captured by observations
+        dist = np.linspace(2, 1, self.n_bins)  # Bins captured by observations
         scaled_dist = 0.9 * dist / dist.sum()  # Scaling by 0.9 to allow for 0.1 emission prob of NaN
         self.chi[1, :-1] = scaled_dist  # Paired emission dist
         self.chi[0, :-1] = np.flip(scaled_dist)  # Unpaired emission dist

@@ -20,11 +20,12 @@ class ScoringManager:
         self.run_config = run_config
         self.mp_tasks = run_config['n_tasks']
         self.mp_pool = None
-        self.motifs = None
+        self.motifs = []
         self.cscore_dists = None
         self.dataset = None
 
-        self.parse_motifs()
+        if run_config['motif'] is not None:
+            self.parse_motifs()
 
     def parse_motifs(self):
 
@@ -97,8 +98,12 @@ class ScoringManager:
 
         n_batches = len(self.dataset.rnas) // scoring_config['batch_size'] + 1  # Number of batches
 
-        header = "transcript start score c-score motif seq\n"
-        open(scoring_config['fp_scores_pre'], 'w').write(header)
+        print(self.motifs)
+        print(bool(self.motifs))
+
+        if self.motifs:
+            header = "transcript start score c-score motif seq\n"
+            open(scoring_config['fp_scores_pre'], 'w').write(header)
 
         logger.info("Executing scoring")
         clock.tick()
@@ -137,14 +142,18 @@ class ScoringManager:
                 pbar_batches.update()
 
         # Sort score file
-        scores = filelib.read_score_file(scoring_config['fp_scores_pre'])
-        if scoring_config['no_cscores']:
-            filelib.write_score_file(sorted(scores, key=lambda score: score['score'], reverse=True),
-                                     scoring_config['fp_scores'])
-        else:
-            filelib.write_score_file(sorted(scores, key=lambda score: score['c-score'], reverse=True),
-                                     scoring_config['fp_scores'])
-        os.remove(scoring_config['fp_scores_pre'])  # Clean-up
+        if self.motifs:
+            scores = filelib.read_score_file(scoring_config['fp_scores_pre'])
+            if not scores:
+                os.rename(scoring_config['fp_scores_pre'], scoring_config['fp_scores'])
+            else:
+                if scoring_config['no_cscores']:
+                    filelib.write_score_file(sorted(scores, key=lambda score: score['score'], reverse=True),
+                                             scoring_config['fp_scores'])
+                else:
+                    filelib.write_score_file(sorted(scores, key=lambda score: score['c-score'], reverse=True),
+                                             scoring_config['fp_scores'])
+                os.remove(scoring_config['fp_scores_pre'])  # Clean-up
         logger.info(' ... done in {}'.format(misclib.seconds_to_hms(clock.tock())))
 
     @staticmethod
@@ -178,7 +187,7 @@ class ScoringManager:
                 f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in transcript.gamma[0, :]])))
             LOCK.release()
 
-        if config['motifs'] is not None:
+        if config['motifs']:
 
             scores = []
             for motif in config['motifs']:
