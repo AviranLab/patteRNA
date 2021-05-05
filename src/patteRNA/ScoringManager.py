@@ -98,9 +98,6 @@ class ScoringManager:
 
         n_batches = len(self.dataset.rnas) // scoring_config['batch_size'] + 1  # Number of batches
 
-        print(self.motifs)
-        print(bool(self.motifs))
-
         if self.motifs:
             header = "transcript start score c-score motif seq\n"
             open(scoring_config['fp_scores_pre'], 'w').write(header)
@@ -237,7 +234,7 @@ class ScoringManager:
         motif_samples = {motif: 0 for motif in self.motifs}
         cscore_rnas = []
 
-        for rna in self.dataset.rnas.values():
+        for rna in sorted(self.dataset.rnas.values(), key=lambda transcript: transcript.density, reverse=True):
             cscore_rnas.append(rna.name)
 
             for motif in self.motifs:

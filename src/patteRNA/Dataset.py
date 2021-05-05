@@ -92,8 +92,8 @@ class Dataset:
         training_obs = []
         kl_div_set = 1.0
 
-        # for rna in sorted(self.rnas.values(), key=lambda transcript: transcript.density, reverse=True):
-        for rna in self.rnas.values():
+        for rna in sorted(self.rnas.values(), key=lambda transcript: transcript.density, reverse=True):
+        # for rna in self.rnas.values():
             training_transcripts.append(rna.name)
             training_obs.extend(rna.obs[rna.mask_finite])
             training_histogram, _ = np.histogram(training_obs,

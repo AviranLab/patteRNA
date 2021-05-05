@@ -52,7 +52,7 @@ def parse_cl_args(inputargs):
     parser.add_argument("--KL-div",
                         metavar="",
                         type=float,
-                        default=0.001,
+                        default=0.0001,
                         help="Minimum Kullback–Leibler divergence criterion for building the training set. The KL "
                              "divergence measures the difference in information content between the full dataset "
                              "and the training set. The smaller the value, the more representative the training "
