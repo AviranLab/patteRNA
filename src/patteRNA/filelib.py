@@ -192,6 +192,8 @@ def prepare_output_dir(run_config):
             overwite_files.append(file_path)
         if file == 'hdsl.txt' and run_config['HDSL']:
             overwite_files.append(file_path)
+        if file == 'spp.txt' and run_config['SPP']:
+            overwite_files.append(file_path)
 
     if overwite_files:
         print("WARNING: the output directory contains previous outputs. "

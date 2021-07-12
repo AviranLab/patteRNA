@@ -44,12 +44,14 @@ class ScoringManager:
         # Compile scoring configuration parameters
         scoring_config = {'posteriors': self.run_config['posteriors'],
                           'hdsl': self.run_config['HDSL'],
+                          'spp': self.run_config['SPP'],
                           'viterbi': self.run_config['viterbi'],
                           'suppress_nan': True,
                           'fp_posteriors': os.path.join(self.run_config['output'], 'posteriors.txt'),
                           'fp_scores_pre': os.path.join(self.run_config['output'], 'scores_pre'),
                           'fp_scores': os.path.join(self.run_config['output'], 'scores.txt'),
                           'fp_hdsl': os.path.join(self.run_config['output'], 'hdsl.txt'),
+                          'fp_spp': os.path.join(self.run_config['output'], 'spp.txt'),
                           'fp_viterbi': os.path.join(self.run_config['output'], 'viterbi.txt'),
                           'no_cscores': self.run_config['no_cscores'],
                           'min_cscores': self.run_config['min_cscores'],
@@ -184,6 +186,18 @@ class ScoringManager:
                 f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in transcript.gamma[0, :]])))
             LOCK.release()
 
+        # Smoothed P(paired) measure --> HDSL without augmentation
+        if config['spp']:
+            spp_tmp = transcript.gamma[1, :]  # No augmentation
+            spp_tmp = uniform_filter1d(spp_tmp, size=5)  # Local mean
+            spp = median_filter(spp_tmp, size=15)  # Local median
+
+            LOCK.acquire()
+            with open(config['fp_spp'], "a") as f:
+                f.write("> {}\n".format(transcript.name))
+                f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in spp])))
+            LOCK.release()
+
         if config['motifs']:
 
             scores = []
@@ -229,12 +243,24 @@ class ScoringManager:
                     f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in hdsl])))
                 LOCK.release()
 
+
     def make_cscore_batch(self, min_sample_size):
+        """
+        Scan through RNAs in provided data and determine how many are needed to sufficiently
+        estimate null distributions for c-score normalization.
+
+        Args:
+            min_sample_size: Minimum number of samples to estimate the null score distribution for a single motif.
+
+        Returns:
+            Dataset of RNAs which is a subset of the provided data and meets the criteria needed for score sampling.
+
+        """
 
         motif_samples = {motif: 0 for motif in self.motifs}
         cscore_rnas = []
 
-        for rna in sorted(self.dataset.rnas.values(), key=lambda transcript: transcript.density, reverse=True):
+        for rna in self.dataset.rnas.values():
             cscore_rnas.append(rna.name)
 
             for motif in self.motifs:

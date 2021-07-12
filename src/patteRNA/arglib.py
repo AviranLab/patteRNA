@@ -52,7 +52,7 @@ def parse_cl_args(inputargs):
     parser.add_argument("--KL-div",
                         metavar="",
                         type=float,
-                        default=0.0001,
+                        default=0.001,
                         help="Minimum Kullback–Leibler divergence criterion for building the training set. The KL "
                              "divergence measures the difference in information content between the full dataset "
                              "and the training set. The smaller the value, the more representative the training "
@@ -108,6 +108,10 @@ def parse_cl_args(inputargs):
                         help="Use scores a representative set of hairpins (stem lengths 4 to 15; loop lengths 3 to 10) "
                              "to quantify structuredness across the input data. This flag overrides any motif "
                              "syntaxes provided via --motif and also activates --posteriors")
+    parser.add_argument("--SPP",
+                        action="store_true",
+                        help="Smoothed P(paired). Quantifies structuredness across the input data via local pairing "
+                             "probabilities. This flag activates --posteriors")
     parser.add_argument("--nan",
                         action="store_true",
                         help="If NaN are considered informative in term of pairing state, use this flag. However, "
@@ -180,6 +184,9 @@ def parse_cl_args(inputargs):
     if run_config['hairpins']:
         run_config['motif'] = "({4,15}.{3,10}){4,15}"
 
+    if run_config['SPP']:
+        run_config['posteriors'] = True
+
     # Set training configuration flag based on provided model
     if input_files['model'] is not None:
         run_config['training'] = False
@@ -194,7 +201,6 @@ def parse_cl_args(inputargs):
 
     if run_config['n_tasks'] == -1:
         run_config['n_tasks'] = multiprocessing.cpu_count()
-
 
     return input_files, run_config
 
@@ -234,6 +240,10 @@ def summarize_job(input_files, run_config):
         text += 2 * tab + "motif: {}\n".format(run_config['motif'])
     if run_config['posteriors']:
         text += 2 * tab + "posteriors: {}\n".format(run_config['posteriors'])
+    if run_config['HDSL']:
+        text += 2 * tab + "HDSL: {}\n".format(run_config['HDSL'])
+    if run_config['SPP']:
+        text += 2 * tab + "SPP: {}\n".format(run_config['SPP'])
     if run_config['viterbi']:
         text += 2 * tab + "viterbi: {}\n".format(run_config['viterbi'])
     text += space
