@@ -4,7 +4,8 @@ This version includes new capabilities in addition to several improvements, incl
 
 - A discretized observation model (DOM) of reactivity, which is more robust to different data distributions and almost always provides a strong improvement to the precision and speed of motif mining when compared to a GMM
 - A `--hairpins` flag to search for a representative set of hairpins automatically, without having to manually specify an extended dot-bracket notation
-- An `--HDSL` flag that computes a "hairpin-driven structure level" profile for RNA transcripts, which provides a quantification of local structure based on local pairing probabilities and the presence of highly-scored hairpin elements
+- A `--HDSL` flag that computes a "hairpin-driven structure level" profile for RNA transcripts, which provides a quantification of local structure based on local pairing probabilities and the presence of highly-scored hairpin elements
+- A '--SPP' flag that computes smoothed P(paired) (pairing probabilities smoothed analagously to HDSL but without augmentation with hairpins)
 - An updated implementation for the computation of c-scores which scales much better for searches with a large number of motifs
 
 This new release involved a fundamental re-write of most of the codebase. As a consequence, some legacy features may not work as expected. The following features are still being brought over to the new release:

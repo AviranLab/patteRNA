@@ -3,10 +3,15 @@ All notable changes to patteRNA are documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2021-07-11
+### Changed
+- Fixed bug in scoring phase that rendered c-score compilation non-deterministic. [PR]
+- Addition of `--SPP` flag to compute smoothed P(paired) as a structure profile. [PR]
+- Improved documentation [PR]
 
 ## [2.0.0] - 2021-02-23
 ### Changed
-- Major version release will almost a full rewrite of the method. [PR]
+- Major version release with almost a full rewrite of the method. [PR]
 - Addition of `--HDSL` flag to compute local structure levels. [PR]
 - Addition of a new Discretized Observation Model (DOM) emission model scheme, which is more precise for scoring and faster than a GMM. [PR]
 - New c-score distribution sampling procedure is much more efficient than before. [PR]
