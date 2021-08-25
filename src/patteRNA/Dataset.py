@@ -138,7 +138,7 @@ class Dataset:
 
     def spawn_reference_set(self):
         spawned_set = Dataset(fp_observations=None, fp_references=None, fp_sequences=None)
-        references = [rna for rna in self.rnas if self.rnas[rna].ref != -1]
+        references = [rna for rna in self.rnas if self.rnas[rna].ref is not -1]
         spawned_set.rnas = {rna: self.rnas[rna] for rna in references}
         spawned_set.compute_stats()
         return spawned_set

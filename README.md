@@ -51,9 +51,7 @@ python setup.py install --user
 echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc; source ~/.bashrc
 ```
 
-*Note for macOS Big Sur and Apple M1 users:* Due to an issue, you must use `pip` to run the installation. Use the commands:
-
-Be sure to update pip and setuptools before attempting the installation (`python -m pip install -U pip setuptools`).
+***Note for macOS Big Sur and Apple M1 users***: Due to an issue, you must use `pip` to run the installation. Be sure to update pip and setuptools before attempting the installation (`python -m pip install -U pip setuptools`). Use the commands:
 
 ```
 python -m pip install .
@@ -184,6 +182,7 @@ optional arguments:
                         of parallel workers (default: 100)
 ```
 
+
 ### Inputs
 patteRNA uses a FASTA-like convention for probing data (see this [example file](sample_data/weeks_set.shape)). As patteRNA learns from data, non-normalized data can be used directly. Also, patteRNA fully supports negatives and zero values, even when applying a log-transformation to the data (via the `-l` flag). We recommend to **not** artificially set negative values to 0. Missing data values must be set to `nan`, `NA` or `-999`.
 
@@ -266,10 +265,12 @@ HDSL is a measure of local structure that assists in converting patteRNA's predi
   
 ## Citation
 
-Version 2.0: \
+If you used patteRNA in your research, please reference the following citations depending on which version of patteRNA you utilized.
+
+**Version 2.0**: \
 Radecki P., Uppuluri R., and Aviran S. (2021) "Rapid Structure-Function Insights via Hairpin-Centric Analysis of Big RNA Structure Probing Datasets." *NAR Genomics and Bioinformatics* 3(3). doi: [10.1093/nargab/lqab073](https://doi.org/10.1093/nargab/lqab073).
 
-Version 1.0–1.2: \
+**Version 1.0–1.2**: \
 Ledda M. and Aviran S. (2018) “PATTERNA: Transcriptome-Wide Search for Functional RNA Elements via Structural Data Signatures.” *Genome Biology* 19(28). doi: [10.1186/s13059-018-1399-z](https://doi.org/10.1186/s13059-018-1399-z).
 
 
@@ -298,4 +299,3 @@ patteRNA is licensed under the BSD-2 License - see the [LICENSE](LICENSE.txt) fi
 
 * You can run patteRNA directly from source without formal installation by running `src.patteRNA` as a module. For example, `python -m src.patteRNA --version`
 * If you are working with transcriptome-wide profiling data, consider using ribosomial RNAs as reference transcripts to achieve the highest quality model possible.
-* 
