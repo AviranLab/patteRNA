@@ -21,7 +21,8 @@ class TrainingManager:
     High-level object for coordinating training.
     """
 
-    def __init__(self, model, mp_tasks, output_dir, k=-1, maxiter=100, epsilon=1e-4):
+    def __init__(self, model, mp_tasks, output_dir, reference=False,
+                 k=-1, maxiter=100, epsilon=1e-4):
 
         # Model and computing paramters
         self.model = model
@@ -38,6 +39,9 @@ class TrainingManager:
 
         # Output directory
         self.output_dir = output_dir
+
+        # Reference training flag
+        self.reference = reference
 
     def import_data(self, training_set):
         self.training_set = training_set
@@ -58,7 +62,13 @@ class TrainingManager:
             while self.model.BIC <= prev_bic:
                 prev_bic = self.model.BIC
                 prev_model = deepcopy(self.model)  # Save previous model state
-                self._train(k, self.maxiter, self.epsilon)  # Train next model size
+
+                # Train next model size
+                if self.reference:
+                    self._train(k, maxiter=1, epsilon=np.Inf)  # Train next model size
+                else:
+                    self._train(k, self.maxiter, self.epsilon)  # Train next model size
+
                 self.model.compute_bic(self.logL, self.training_set.stats['n_obs'])  # Model selection criteria
                 logger.info(" >> BIC: {:.3e}".format(self.model.BIC))
                 k += 1
@@ -122,7 +132,7 @@ class TrainingManager:
             logger.debug('{}: logL = {:.1f}'.format(iter_count, self.logL))
             iter_count += 1
 
-            if iter_count >= 5:  # Check convergence after 5 iterations
+            if iter_count >= 5 or iter_count == maxiter:  # Check convergence after 5 iterations
 
                 dlogl = self.logL - prev_logl
 
@@ -147,6 +157,14 @@ class TrainingManager:
     def em_worker(transcript, model):
 
         logl = model.e_step(transcript)
+        params = model.m_step(transcript)
+
+        return {'logL': logl, **params}
+
+    @staticmethod
+    def em_worker_ref(transcript, model):
+
+        logl = (transcript)
         params = model.m_step(transcript)
 
         return {'logL': logl, **params}
@@ -190,9 +208,13 @@ class TrainingManager:
             x = np.linspace(self.training_set.stats['minimum'], self.training_set.stats['maximum'], 100)
             pdf0 = np.zeros(100)
             pdf1 = np.zeros(100)
-            for i in range(self.k):
+            for i in range(self.model.emission_model.k):
                 pdf0 += self.model.emission_model.w[0, i]*self.model.emission_model.gmm_pdfs[0][i].pdf(x)
                 pdf1 += self.model.emission_model.w[1, i]*self.model.emission_model.gmm_pdfs[1][i].pdf(x)
+                # print(self.model.emission_model.w)
+                # print(self.model.emission_model.mu)
+                # print(self.model.emission_model.sigma)
+                # print(pdf0)
             ax.plot(x, pdf0, color='red', label='Unpaired')
             ax.plot(x, pdf1, color='blue', label='Paired')
 
@@ -211,7 +233,6 @@ class TrainingManager:
         ax.grid(which='major', axis='both')
         ax.legend(bbox_to_anchor=(1.02, 0.55), loc='lower left')
         fig.savefig(fp, format='svg')
-        # fig.show()
 
     def terminate(self):
         """

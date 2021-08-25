@@ -8,11 +8,9 @@ class HMM:
         self.n_params = None
         self.type = 'HMM'
 
-    def set_params(self, transitions=None, pi=None):
-        if transitions:
-            self.A = np.array(transitions)
-        if pi:
-            self.pi = np.array(pi)
+    def set_params(self, config):
+        params = {'A', 'pi'}
+        self.__dict__.update((param, np.array(value)) for param, value in config.items() if param in params)
 
     def initialize(self):
         self.A = np.array(((0.7, 0.3), (0.3, 0.7)))  # Due to constraints of transition matrix, 2 params

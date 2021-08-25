@@ -1,26 +1,27 @@
 """Command line wrapper for patteRNA."""
 
-import sys
 import logging
-from .Dataset import Dataset
-from .TrainingManager import TrainingManager
-from .ScoringManager import ScoringManager
-from .Model import Model
-from .DOM import DOM
-from .GMM import GMM
-from .HMM import HMM
-from . import arglib, filelib, misclib, timelib, logger_config
+import sys
+from src.patteRNA.Dataset import Dataset
+from src.patteRNA.Model import Model
+from src.patteRNA.ScoringManager import ScoringManager
+from src.patteRNA.TrainingManager import TrainingManager
+from src.patteRNA.DOM import DOM
+from src.patteRNA.GMM import GMM
+from src.patteRNA.HMM import HMM
+from src.patteRNA import arglib, filelib, misclib, timelib, logger_config
 
 
-def main():
+def main(testcmd=None):
 
     main_clock = timelib.Clock()
-    main_clock.tick()  # Start task timer
-    clock = timelib.Clock()
+    main_clock.tick()  # Start task timer for overall process
 
     # Parse command line arguments
-    input_files, run_config = arglib.parse_cl_args(sys.argv[1:])
-
+    if testcmd is None:
+        input_files, run_config = arglib.parse_cl_args(sys.argv[1:])
+    else:
+        input_files, run_config = arglib.parse_cl_args(testcmd.split())
     # Prepare output folder, confirming any possible overwrites
     filelib.prepare_output_dir(run_config)
 
@@ -37,9 +38,23 @@ def main():
     # Parse input data
     data = Dataset(fp_observations, fp_sequences, fp_references)  # Initialize Dataset object
 
+    clock = timelib.Clock()  # Clock for timing individual steps
     logger.info("Loading input data")
     clock.tick()
     data.load_rnas(log_flag=run_config['log'])  # Load RNAs
+
+    if input_files['reference'] is not None:
+        reference_states, reference_seqs = filelib.read_dot_bracket(input_files['reference'])
+        reference_rnas = list(reference_states.keys())
+        if len(reference_rnas) > 0:
+            run_config['reference'] = True
+            for rna in reference_rnas:
+                if reference_seqs[rna] != data.rnas[rna].seq:
+                    logger.warning("Inconsistent sequence in reference file for RNA: {}\n"
+                                   "Transcript will not be used for training.".format(rna))
+                else:
+                    data.rnas[rna].enforce_reference(reference_states[rna])
+
     logger.info(" ... done in {}".format(misclib.seconds_to_hms(clock.tock())))
 
     if run_config['training']:
@@ -50,33 +65,60 @@ def main():
             em = DOM()
 
         # Initialize Model object with structure model (HMM) and emission model (DOM or GMM)
-        model = Model(structure_model=HMM(), emission_model=em)
+        model = Model(structure_model=HMM(), emission_model=em, reference=run_config['reference'])
 
-        # Spawn training set RNAs
-        logger.info("Spawning training set")
-        clock.tick()
-        training_set, kl_div = data.spawn_training_set(kl_div=run_config['KL_div'])
-        logger.info(" ... done in {}".format(misclib.seconds_to_hms(clock.tock())))
+        if run_config['reference']:
+            # Spawn training set RNAs
+            logger.info("Using reference set.")
+            clock.tick()
+            reference_set = data.spawn_reference_set()
 
-        logger.info("Training set summary: \n"
-                    "       Passed QC                  {:d}\n"
-                    "       Used transcripts           {:d}\n"
-                    "       # Data points (in {})     {:d}\n"
-                    "       KL div                     {:.3g}".format(len(data.rnas),
-                                                                      len(training_set.rnas),
-                                                                      model.emission_model.type,
-                                                                      training_set.stats['n_obs'],
-                                                                      kl_div))
+            logger.info("Reference set summary: \n"
+                        "       Passed QC                  {:d}\n"
+                        "       Used transcripts           {:d}\n"
+                        "       # Data points (in {})     {:d}\n"
+                        "       # Unpaired Obs             {:d}\n"
+                        "       # Paired Obs               {:d}\n".format(len(data.rnas),
+                                                                          len(reference_set.rnas),
+                                                                          model.emission_model.type,
+                                                                          reference_set.stats['n_obs'],
+                                                                          reference_set.stats['up_ref'],
+                                                                          reference_set.stats['p_ref']))
 
-        tm = TrainingManager(model=model, mp_tasks=run_config['n_tasks'], output_dir=run_config['output'], k=run_config['k'])
-        tm.import_data(training_set)
+            tm = TrainingManager(model=model, mp_tasks=run_config['n_tasks'], output_dir=run_config['output'],
+                                 k=run_config['k'], reference=True)
+            tm.import_data(reference_set)
+
+        else:
+
+            # Spawn training set RNAs
+            logger.info("Spawning training set")
+            clock.tick()
+            training_set, kl_div = data.spawn_training_set(kl_div=run_config['KL_div'])
+            logger.info(" ... done in {}".format(misclib.seconds_to_hms(clock.tock())))
+
+            logger.info("Training set summary: \n"
+                        "       Passed QC                  {:d}\n"
+                        "       Used transcripts           {:d}\n"
+                        "       # Data points (in {})     {:d}\n"
+                        "       KL div                     {:.3g}".format(len(data.rnas),
+                                                                          len(training_set.rnas),
+                                                                          model.emission_model.type,
+                                                                          training_set.stats['n_obs'],
+                                                                          kl_div))
+
+            tm = TrainingManager(model=model, mp_tasks=run_config['n_tasks'], output_dir=run_config['output'],
+                                 k=run_config['k'])
+            tm.import_data(training_set)
 
         clock.tick()
         tm.execute_training()
         logger.info("Training phase done in {}".format(misclib.seconds_to_hms(clock.tock())))
 
     else:
-        model = filelib.load_model(input_files['model'])  # Returns Model object
+
+        model = Model()
+        model.load(filelib.parse_model(input_files['model']))
         logger.info("Using trained {}-{} model at {}".format(model.emission_model.type,
                                                              model.structure_model.type,
                                                              input_files['model']))

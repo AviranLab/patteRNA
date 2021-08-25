@@ -1,17 +1,21 @@
 import os
 import numpy as np
-from . import filelib
-from . import _version
+from src.patteRNA import filelib
+from src.patteRNA import version
+from src.patteRNA.HMM import HMM
+from src.patteRNA.DOM import DOM
+from src.patteRNA.GMM import GMM
+
+model_map = {'HMM': HMM,
+             'DOM': DOM,
+             'GMM': GMM}
 
 
 class Model:
-    """
-
-    """
-
-    def __init__(self, structure_model=None, emission_model=None):
+    def __init__(self, structure_model=None, emission_model=None, reference=False):
         self.structure_model = structure_model
         self.emission_model = emission_model
+        self.reference = reference
         self.BIC = np.Inf
         self.states = 2
 
@@ -33,7 +37,7 @@ class Model:
 
     def e_step(self, transcript):
 
-        self.emission_model.compute_emissions(transcript)
+        self.emission_model.compute_emissions(transcript, reference=self.reference)
 
         logl = self.forward_backward(transcript)  # Compute alpha, beta, c for transcript
 
@@ -164,9 +168,17 @@ class Model:
         self.BIC = np.Inf
 
     def serialize(self):
-        return {'version': _version.__version__,
+        return {'version': version.__version__,
                 'structure_model': self.structure_model.serialize(),
-                'emission_model': self.emission_model.serialize()}
+                'emission_model': self.emission_model.serialize(),
+                'training_type': 'reference' if self.reference else 'unsupervised'}
 
     def save(self, output_dir):
-        filelib.save_model(self, os.path.join(output_dir, 'trained_model.json'))
+        filelib.save_model(self.serialize(), os.path.join(output_dir, 'trained_model.json'))
+
+    def load(self, model_config):
+
+        self.structure_model = model_map[model_config['structure_model']['type']]()
+        self.structure_model.set_params(model_config['structure_model'])
+        self.emission_model = model_map[model_config['emission_model']['type']]()
+        self.emission_model.set_params(model_config['emission_model'])

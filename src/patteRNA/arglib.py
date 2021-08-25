@@ -3,23 +3,33 @@
 import argparse
 import logging
 import multiprocessing
-from . import _version
+from src.patteRNA import version
 
 logger = logging.getLogger(__name__)
 
 
 def parse_cl_args(inputargs):
+    """
+    Parse command line arguments.
+    Args:
+        inputargs (list): List of input arguments.
+
+    Returns:
+        input_file (dict): Dictionary of input file names
+        run_config (dict): Dictionary of run configuration options
+
+    """
     parser = argparse.ArgumentParser(prog="patteRNA",
                                      description="Rapid mining of RNA secondary structure motifs from profiling data.",
                                      epilog="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--version",
                         action="version",
-                        version="%(prog)s {}".format(_version.__version__))
+                        version="%(prog)s {}".format(version.__version__))
     parser.add_argument("probing",
                         metavar="probing",
                         type=str,
-                        help="FASTA-like file of probing data.")
+                        help="FASTA-like file of probing data")
     parser.add_argument("output",
                         metavar="output",
                         type=str,
@@ -33,13 +43,17 @@ def parse_cl_args(inputargs):
                         metavar="",
                         default=None,
                         type=str,
-                        help="FASTA-like file of reference RNA secondary structures in dot-bracket notation.")
+                        help="FASTA-like file of reference RNA secondary structures in dot-bracket notation")
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="Print progress")
     parser.add_argument("-l", "--log",
                         action="store_true",
                         help="Log transform input data")
+    parser.add_argument("--GMM",
+                        action="store_true",
+                        help="Train a Gaussian Mixture Model (GMM) during training instead of a Discretized Observation"
+                             "Model (DOM)")
     parser.add_argument("-k",
                         metavar="",
                         type=int,
@@ -48,7 +62,7 @@ def parse_cl_args(inputargs):
                              "determined automatically using Bayesian Information Criteria. If K <= 0, automatic "
                              "detection is enabled. Increasing K manually will make the model fit the data tighter but "
                              "could result in overfitting. Fitted data should always be visually inspected after "
-                             "training to gauge if the model is adequate")
+                             "training to gauge if the model is adequate.")
     parser.add_argument("--KL-div",
                         metavar="",
                         type=float,
@@ -72,7 +86,7 @@ def parse_cl_args(inputargs):
                         metavar="",
                         type=int,
                         default=-1,
-                        help="Number of parallel processes. By default all available CPUs are used")
+                        help="Number of parallel processes. By default all available CPUs are used.")
     parser.add_argument("--model",
                         metavar="",
                         type=str,
@@ -107,33 +121,29 @@ def parse_cl_args(inputargs):
                         action="store_true",
                         help="Use scores a representative set of hairpins (stem lengths 4 to 15; loop lengths 3 to 10) "
                              "to quantify structuredness across the input data. This flag overrides any motif "
-                             "syntaxes provided via --motif and also activates --posteriors")
+                             "syntaxes provided via --motif and also activates --posteriors.")
     parser.add_argument("--SPP",
                         action="store_true",
                         help="Smoothed P(paired). Quantifies structuredness across the input data via local pairing "
-                             "probabilities. This flag activates --posteriors")
+                             "probabilities. This flag activates --posteriors.")
     parser.add_argument("--nan",
                         action="store_true",
                         help="If NaN are considered informative in term of pairing state, use this flag. However, "
                              "note that this can lead to unstable results and is therefore not recommended if data "
-                             "quality is low or long runs of NaN exist in the data")
+                             "quality is low or long runs of NaN exist in the data.")
     parser.add_argument("--no-prompt",
                         action="store_true",
                         help="Do not prompt a question if existing output files could be overwritten. Useful for "
-                             "automation using scripts or for running patteRNA on computing servers")
-    parser.add_argument("--GMM",
-                        action="store_true",
-                        help="Train a Gaussian Mixture Model (GMM) during training instead of a Discretized Observation"
-                             "Model (DOM)")
-    parser.add_argument("--no-cscores",
-                        action="store_true",
-                        help="Suppress the computation of c-scores during the scoring phase")
+                             "automation using scripts or for running patteRNA on computing servers.")
     parser.add_argument("--min-cscores",
                         metavar="",
                         type=int,
                         default=1000,
                         help="Minimum number of scores to sample during construction of null distributions to use"
                              "for c-score normalization")
+    parser.add_argument("--no-cscores",
+                        action="store_true",
+                        help="Suppress the computation of c-scores during the scoring phase")
     parser.add_argument("--batch-size",
                         metavar="",
                         type=int,
@@ -194,13 +204,15 @@ def parse_cl_args(inputargs):
         run_config['training'] = True
 
     # Set scoring configuration flag
-    if run_config['HDSL'] or run_config['posteriors'] or run_config['motif'] is not None:
+    if run_config['HDSL'] or run_config['posteriors'] or run_config['motif'] or run_config['viterbi'] is not None:
         run_config['scoring'] = True
     else:
         run_config['scoring'] = False
 
     if run_config['n_tasks'] == -1:
         run_config['n_tasks'] = multiprocessing.cpu_count()
+
+    run_config['reference'] = False
 
     return input_files, run_config
 

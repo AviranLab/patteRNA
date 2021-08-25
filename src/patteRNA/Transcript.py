@@ -1,5 +1,5 @@
 import numpy as np
-from . import rnalib
+from src.patteRNA import rnalib
 
 
 class Transcript:
@@ -9,7 +9,7 @@ class Transcript:
         self.obs = obs
         self.T = len(obs)
         self.obs_dom = None
-        self.ref = None
+        self.ref = -1
 
         self.alpha = None
         self.beta = None
@@ -52,3 +52,12 @@ class Transcript:
         self.log_B_ratio = np.zeros((2, self.T), dtype=float)
         self.log_B_ratio[0, :] = np.log(self.B[0, :] / self.B[1, :])
         self.log_B_ratio[1, :] = -1 * self.log_B_ratio[0, :]
+
+    def enforce_reference(self, ref):
+        self.ref = ref
+        self.B = np.zeros((2, self.T), dtype=float)
+        self.B[0, :] = 1 - np.array(ref)
+        self.B[1, :] = np.array(ref)
+        self.gamma = np.zeros((2, self.T), dtype=float)
+        self.gamma[0, :] = 1 - np.array(ref)
+        self.gamma[1, :] = np.array(ref)

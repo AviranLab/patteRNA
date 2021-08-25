@@ -3,11 +3,7 @@ import os
 import numpy as np
 import pathlib
 import json
-from . import rnalib
-from .HMM import HMM
-from .DOM import DOM
-from .GMM import GMM
-from .Model import Model
+from src.patteRNA import rnalib
 
 
 HEADER_COL_ORDER = {'transcript': 0,
@@ -22,40 +18,20 @@ HEADER_COL_ORDER = {'transcript': 0,
 user_prompts = {"yes": ["y", "Y", "yes", "Yes"],
                 "no": ["n", "N", "no", "No"]}
 
+DB_MAP = {'.': 0,
+          '1': 1,
+          '0': 0}
 
-def save_model(model, fp_out):
-    model_dict = model.serialize()
+DB_MAP.update([(bracket, 1) for brackets in rnalib.BRACKETS for bracket in brackets])
+
+
+def save_model(jstr, fp_out):
     with open(fp_out, 'w') as f:
-        json.dump(model_dict, f, indent=2)
+        json.dump(jstr, f, indent=2)
 
 
-def load_model(fp_in):
-    structure_model = None
-    emission_model = None
-
-    input_dict = json.loads(open(fp_in, 'r').read())  # Read input data
-
-    if input_dict['structure_model']['type'] == 'HMM':
-        structure_model = HMM()
-        structure_model.set_params(transitions=input_dict['structure_model']['A'],
-                                   pi=input_dict['structure_model']['pi'])
-    if input_dict['emission_model']['type'] == 'DOM':
-        emission_model = DOM()
-        emission_model.set_params(n_bins=input_dict['emission_model']['n_bins'],
-                                  edges=input_dict['emission_model']['edges'],
-                                  classes=input_dict['emission_model']['classes'],
-                                  chi=input_dict['emission_model']['chi'])
-    if input_dict['emission_model']['type'] == 'GMM':
-        emission_model = GMM()
-        emission_model.set_params(k=input_dict['emission_model']['k'],
-                                  w=input_dict['emission_model']['w'],
-                                  mu=input_dict['emission_model']['mu'],
-                                  sigma=input_dict['emission_model']['sigma'],
-                                  phi=input_dict['emission_model']['phi'],
-                                  nu=input_dict['emission_model']['nu'],
-                                  n_params=input_dict['emission_model']['n_params'])
-
-    return Model(structure_model=structure_model, emission_model=emission_model)
+def parse_model(fp):
+    return json.loads(open(fp, 'r').read())
 
 
 def parse_observations(fp):
@@ -108,6 +84,53 @@ def parse_fasta(fp):
             out_dict[name] = seq
 
     return out_dict
+
+
+def read_dot_bracket(fp):
+    """
+        Returns dictionaries of structures and sequences, if the with_sequence flag is set to True)
+        for each transcript in a .dot file.
+
+            Parameters:
+                fp (str): Dot file
+
+            Returns:
+                db_dict (dict): Dictionary of dot-bracket structures
+                seq_dict (dict): Dictionary of nucleotide sequences
+    """
+
+    db_dict = dict()
+    seq_dict = dict()
+
+    with open(fp, 'r') as f:
+
+        entry_name = None
+
+        for line in f.readlines():
+
+            if line[0] == '>':
+                entry_name = line.split('>')[1].strip()
+                continue
+
+            if entry_name is not None:
+                if line[0].upper() in rnalib.BASES:
+                    seq = line.strip()
+                    rnalib.verify_sequence(seq, entry_name)
+                    seq_dict[entry_name] = seq
+                    continue
+                if line[0] in rnalib.VALID_DB_CHAR:
+                    if rnalib.valid_db(line.strip()):
+                        db_dict[entry_name] = np.array([DB_MAP[d] for d in line.strip()], dtype=int)
+                        entry_name = None
+                else:
+                    if line[0] in ('1', '0'):
+                        db_dict[entry_name] = np.array([DB_MAP[d] for d in line.strip()], dtype=int)
+                        entry_name = None
+                    else:
+                        raise Exception(
+                            'Reference structure information for transcript ""{}"" is invalid'.format(entry_name))
+
+    return db_dict, seq_dict
 
 
 def parse_shape_str(shape_str):
@@ -170,7 +193,6 @@ def recover_score_header(scores):
 
 
 def prepare_output_dir(run_config):
-
     path = run_config['output']
     make_dir(path)
 
@@ -198,12 +220,12 @@ def prepare_output_dir(run_config):
     if overwite_files:
         print("WARNING: the output directory contains previous outputs. "
               "The following files will be overwritten:\n")
-        print("\n".join(overwite_files)+"\n")
+        print("\n".join(overwite_files) + "\n")
 
         response = None
 
         while not response:
-            response_text = input("Enter yes [yes/y] to confirm overwrite or no [no/n] to cancel run: ")
+            response_text = input("Enter yes [y/yes] to confirm overwrite, or no [n/no] to cancel run: ")
             response = interpret_response(response_text)
 
         if response == 'yes':
@@ -215,7 +237,6 @@ def prepare_output_dir(run_config):
 
 
 def interpret_response(response_text):
-
     for valid_reponse in user_prompts:
         if response_text in user_prompts[valid_reponse]:
             return valid_reponse

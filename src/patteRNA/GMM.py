@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.stats import norm
-import matplotlib.pyplot as plt
 
 
 class GMM:
@@ -18,22 +17,10 @@ class GMM:
         self._finite_obs = None
         self._state_props = None
 
-    def set_params(self, k=None, w=None, mu=None, sigma=None, phi=None,
-                   nu=None, n_params=None):
-        if k:
-            self.k = int(k) - 2
-        if w:
-            self.w = np.array(w)
-        if mu:
-            self.mu = np.array(mu)
-        if sigma:
-            self.sigma = np.array(sigma)
-        if phi:
-            self.phi = np.array(phi)
-        if nu:
-            self.nu = np.array(nu)
-        if n_params:
-            self.n_params = int(n_params)
+    def set_params(self, config):
+
+        params = {'k', 'w', 'mu', 'sigma', 'phi', 'nu', 'n_params'}
+        self.__dict__.update((param, np.array(value)) for param, value in config.items() if param in params)
 
         self.setup_gmm_pdfs()
 
@@ -41,11 +28,12 @@ class GMM:
 
         self.k = k
 
-        self.w = np.tile(1 / k, (2, k))
+        self.w = np.tile(1 / k, (2, k))  # Uniform weights
+        # Symmetrically place initial distributions around the median, one higher than the other
         self.mu = np.vstack((np.linspace(stats['P60'], stats['P75'], k), np.linspace(stats['P25'], stats['P40'], k)))
-        self.sigma = np.tile(stats['continuous_variance'], (2, k))
-        self.phi = np.array((0.05, 0.05))
-        self.nu = np.array((0.1, 0.1))
+        self.sigma = np.tile(stats['continuous_variance'], (2, k))  # Use overall variance
+        self.phi = np.array((0.05, 0.05))  # P(NaN)
+        self.nu = np.array((0.1, 0.1))  # P(zero)
 
         self._finite_obs = stats['finite_obs']
         self._state_props = np.array((0.5, 0.5))
@@ -59,17 +47,19 @@ class GMM:
             self.gmm_pdfs[0].append(norm(loc=self.mu[0, i], scale=np.sqrt(self.sigma[0, i])))
             self.gmm_pdfs[1].append(norm(loc=self.mu[1, i], scale=np.sqrt(self.sigma[1, i])))
 
-    def compute_emissions(self, transcript):
+    def compute_emissions(self, transcript, reference=False):
 
         # Peform computations for weighted kernels
         self.wnormpdfs(transcript)
+
+        if reference:
+            return
 
         # Correct kernel emissions for phi and nu
         # transcript.gamma_gmm_k *= (1 - self.nu[:, np.newaxis, np.newaxis] - self.phi[:, np.newaxis, np.newaxis])
 
         b = np.sum(transcript.gamma_gmm_k, axis=1)  # Sum emissions of all kernels
         b *= (1 - self.nu[:, np.newaxis] - self.phi[:, np.newaxis])
-        # print(b.shape)
 
         # Assign emission likelihoods for discrete cases
         b[:, transcript.mask_0] = self.nu[:, np.newaxis]
@@ -120,7 +110,7 @@ class GMM:
         # self.phi = np.array((0.05, 0.05))
         self.nu = pseudocounts['nu'] / pseudocounts['phi_nu_norm']
         self._state_props = pseudocounts['unpaired_prop'] / pseudocounts['unpaired_prop'].sum()
-        self.setup_gmm_pdfs()
+        self.setup_gmm_pdfs()  # Construct new distribution objects
 
     def wnormpdfs(self, transcript):
         transcript.gamma_gmm_k = np.tile(np.nan, (2, self.k, len(transcript.obs)))

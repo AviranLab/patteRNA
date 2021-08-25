@@ -1,7 +1,7 @@
 import string
 import numpy as np
 
-BASES = ('A', 'T', 'G', 'C', 'U')
+BASES = ('A', 'T', 'G', 'C', 'U', 'N')
 
 PAIRING_TABLE = {'A': ('U', 'T'),
                  'U': ('A', 'G'),
@@ -27,6 +27,8 @@ def verify_sequence(seq, name):
         if char not in BASES:
             print('WARNING - Invalid nucleotide character detected in: {}\n'
                   '          Valid characters are ACGUT'.format(name))
+            return False
+    return True
 
 
 def valid_db(db):
@@ -73,8 +75,8 @@ def is_valid_pairing(seq, partners):
     Ensures that the structure given by the dot-bracket can form based on the underlying sequence.
 
     Args:
-        seq (list): Underlying RNA sequence as a list
-        partners(list): List of (i, j) tuples of base pair partners
+        seq (str): Underlying RNA sequence as a list
+        partners (list): List of (i, j) tuples of base pair partners
 
     Returns: True if pairing is valid, False otherwise.
 
@@ -104,10 +106,7 @@ def compute_pairing_partners(db, ignore_invalid=False):
         if s in LEFT_BRACKETS:
             ob[s].append(j)
         elif s in RIGHT_BRACKETS:
-            if len(ob[PARTNER_MAP[s][0]]) > 0:
-                partners.append((ob[PARTNER_MAP[s][0]].pop(-1), j))
-            else:
-                continue
+            partners.append((ob[PARTNER_MAP[s][0]].pop(-1), j))
         else:
             unpaired.append((j, -1))
 

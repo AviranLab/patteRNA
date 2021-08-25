@@ -3,13 +3,16 @@ All notable changes to patteRNA are documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.0.1] - 2021-07-11
+## [2.0] - 2021-08-24
+- Re-implemented `--reference` flag to natively work with new training pipeline [PR]
+
+## [2.0.0-beta] - 2021-07-11
 ### Changed
 - Fixed bug in scoring phase that rendered c-score compilation non-deterministic. [PR]
 - Addition of `--SPP` flag to compute smoothed P(paired) as a structure profile. [PR]
 - Improved documentation [PR]
 
-## [2.0.0] - 2021-02-23
+## [2.0.0-alpha] - 2021-02-23
 ### Changed
 - Major version release with almost a full rewrite of the method. [PR]
 - Addition of `--HDSL` flag to compute local structure levels. [PR]
@@ -18,9 +21,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 - Now using human-readable `.json` format for saving a loading trained models. [PR]
 - Matplotlib backend to `svg`. [PR]
 - Dependencies: `humanfriendly`. [PR]
-
-### Removed
-- Temporarily removed `--reference` and `--config` options. [PR]
 
 ## [1.2.2] - 2020-01-08
 ### Changed

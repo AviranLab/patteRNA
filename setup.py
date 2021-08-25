@@ -8,7 +8,7 @@ from os.path import join
 from setuptools import find_packages
 from setuptools import setup
 
-from src.patteRNA._version import __version__
+from src.patteRNA.version import __version__
 
 # Get the long description from the README file
 with open(join("README.md")) as f:
@@ -43,17 +43,10 @@ setup(
 
     # Dependencies
     install_requires=[
-        "appdirs",
         "exrex",
         "humanfriendly",
         "numpy",
         "matplotlib",
-        "packaging",
-        "pygal",
-        "pyparsing",
-        "PyYAML",
-        "regex",
-        "six",
         "tqdm",
         "scikit-learn",
         "scipy",
@@ -71,10 +64,5 @@ setup(
         ]
     },
 
-    # Requirements for tests and coverage analysis
-    setup_requires=["pytest-runner"],
-    tests_require=["pytest",
-                   "coverage",
-                   "pytest_cov"],
     zip_safe=False
 )

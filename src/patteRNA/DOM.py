@@ -11,18 +11,9 @@ class DOM:
         self.type = 'DOM'
         self.n_params = None
 
-    def set_params(self, n_bins=None, edges=None, classes=None, chi=None, n_params=None):
-        if n_bins:
-            self.k = int(n_bins) - 2
-            self.n_bins = n_bins
-        if edges:
-            self.edges = np.array(edges)
-        if classes:
-            self.classes = np.array(classes)
-        if chi:
-            self.chi = np.array(chi)
-        if n_params:
-            self.n_params = int(n_params)
+    def set_params(self, config):
+        params = {'n_bins', 'edges', 'classes', 'chi', 'n_params'}
+        self.__dict__.update((param, np.array(value)) for param, value in config.items() if param in params)
 
     def initialize(self, k, stats):
 
@@ -60,7 +51,7 @@ class DOM:
 
         transcript.obs_dom = np.searchsorted(self.edges, transcript.obs, side='left')
 
-    def compute_emissions(self, transcript):
+    def compute_emissions(self, transcript, reference=False):
         """
         Compute emission probabilities according to the discretized observation model.
 

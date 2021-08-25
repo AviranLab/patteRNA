@@ -59,17 +59,22 @@ class Dataset:
 
         finite_obs = []
         total_obs = 0
-        # nan_obs = 0
+        up_ref = 0
+        p_ref = 0
 
         for rna in self.rnas:
             finite_obs.extend(self.rnas[rna].obs[np.isfinite(self.rnas[rna].obs)])
             total_obs += len(self.rnas[rna].obs)
+            up_ref += int(np.sum(self.rnas[rna].ref == 0))
+            p_ref += int(np.sum(self.rnas[rna].ref == 1))
 
         self.stats['quantile_basis'] = np.linspace(0, 1, 1000)
         self.stats['quantiles'] = np.quantile(finite_obs, self.stats["quantile_basis"])
         self.stats['P25'], self.stats['P75'] = np.percentile(finite_obs, (25, 75))
         self.stats['P40'], self.stats['P60'] = np.percentile(finite_obs, (40, 60))
         self.stats['n_obs'] = len(finite_obs)
+        self.stats['up_ref'] = up_ref
+        self.stats['p_ref'] = p_ref
         self.stats['total_obs'] = total_obs
         self.stats['continuous_variance'] = np.var(finite_obs)
         self.stats['minimum'] = np.min(finite_obs)
@@ -129,6 +134,13 @@ class Dataset:
     def spawn_set(self, rnas):
         spawned_set = Dataset(fp_observations=None, fp_sequences=None, fp_references=None)
         spawned_set.rnas = {rna: self.rnas[rna] for rna in rnas}
+        return spawned_set
+
+    def spawn_reference_set(self):
+        spawned_set = Dataset(fp_observations=None, fp_references=None, fp_sequences=None)
+        references = [rna for rna in self.rnas if self.rnas[rna].ref != -1]
+        spawned_set.rnas = {rna: self.rnas[rna] for rna in references}
+        spawned_set.compute_stats()
         return spawned_set
 
     def clear(self):
