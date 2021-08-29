@@ -1,8 +1,10 @@
+import logging
 import numpy as np
 from scipy.stats import entropy
 from .Transcript import Transcript
 from . import filelib
 
+logger = logging.getLogger(__name__)
 
 
 class Dataset:
@@ -30,7 +32,7 @@ class Dataset:
             # Cross reference input files to confirm all transcripts
             for rna in observations_rnas.difference(sequences_rnas):
                 print('WARNING - No sequence found for RNA: {}'.format(rna))
-                sequences_dict[rna] = ''.join(['N']*len(observations_dict[rna]))
+                sequences_dict[rna] = ''.join(['N'] * len(observations_dict[rna]))
 
             for rna in sequences_rnas.difference(observations_rnas):
                 print('WARNING - No probing data found for RNA: {}'.format(rna))
@@ -42,7 +44,8 @@ class Dataset:
             if self.fp_fasta:
                 self.rnas[rna_name] = Transcript(rna_name, sequences_dict[rna_name], observations_dict[rna_name])
             else:
-                self.rnas[rna_name] = Transcript(rna_name, 'N'*len(observations_dict[rna_name]), observations_dict[rna_name])
+                self.rnas[rna_name] = Transcript(rna_name, 'N' * len(observations_dict[rna_name]),
+                                                 observations_dict[rna_name])
 
         if log_flag:
             for rna in self.rnas:
@@ -82,8 +85,8 @@ class Dataset:
         self.stats['finite_obs'] = finite_obs
         self.stats['histogram_bins'] = np.linspace(self.stats['minimum'], self.stats['maximum'], 20)
         self.stats['histogram'], _ = np.histogram(finite_obs,
-                                               bins=self.stats['histogram_bins'],
-                                               density=True)
+                                                  bins=self.stats['histogram_bins'],
+                                                  density=True)
 
     def spawn_training_set(self, kl_div):
         """
@@ -96,17 +99,23 @@ class Dataset:
         training_transcripts = []
         training_obs = []
         kl_div_set = 1.0
+        group_size = 20
 
-        # for rna in sorted(self.rnas.values(), key=lambda transcript: transcript.density, reverse=True):
-        for rna in self.rnas.values():
-            training_transcripts.append(rna.name)
-            training_obs.extend(rna.obs[rna.mask_finite])
+        logger.info(' ... sorting')
+        rnas_sd = sorted(self.rnas.values(), key=lambda transcript: transcript.density, reverse=True)
+
+        logger.info(' ... selecting')
+        while kl_div_set > kl_div and rnas_sd:
+            rnas = rnas_sd[:group_size]
+            rnas_sd[:group_size] = []
+            for rna in rnas:
+                training_transcripts.append(rna.name)
+                training_obs.extend(rna.obs[rna.mask_finite])
+
             training_histogram, _ = np.histogram(training_obs,
-                                              bins=self.stats['histogram_bins'],
-                                              density=True)
+                                                 bins=self.stats['histogram_bins'],
+                                                 density=True)
             kl_div_set = entropy(training_histogram, self.stats['histogram'])
-            if kl_div_set < kl_div:
-                break
 
         training_set = self.spawn_set(rnas=training_transcripts)
         training_set.compute_stats()

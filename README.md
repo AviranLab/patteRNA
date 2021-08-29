@@ -2,7 +2,7 @@
 
 # *patteRNA*
 
-Rapid mining of RNA secondary structure motifs from structure probing data.
+Rapid mining of RNA secondary structure motifs from structure profiling data.
 
 
 ## What Is It?
