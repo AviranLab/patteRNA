@@ -44,11 +44,10 @@ To install the Python module such that it can be executed from the command line,
 python setup.py install
 ```
 
-You can also specify a local installation using the commands:
+You can also specify a [local installation](https://packaging.python.org/tutorials/installing-packages/#installing-to-the-user-site) using the command:
 
 ```
 python setup.py install --user
-echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc; source ~/.bashrc
 ```
 
 ***Note for macOS Big Sur and Apple M1 users***: Due to an issue, you must use `pip` to run the installation. Be sure to update pip and setuptools before attempting the installation (`python -m pip install -U pip setuptools`). Use the commands:
