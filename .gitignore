@@ -15,6 +15,5 @@ tests/
 htmlcov/
 analytics/
 sphinx/
-dist/
 test/
 *venv/

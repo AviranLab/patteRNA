@@ -215,7 +215,7 @@ The results of a motif search are saved in the file `scores.txt` in the output d
 - Transcript name
 - Site start position (uses a 1-based encoding)
 - Score
-- C-score
+- c-score
 - Motif in dot-bracket notation
 - Nucleotide sequence
 
