@@ -1,10 +1,10 @@
 import os
 import numpy as np
-from src.patteRNA import filelib
-from src.patteRNA import version
-from src.patteRNA.HMM import HMM
-from src.patteRNA.DOM import DOM
-from src.patteRNA.GMM import GMM
+from patteRNA import filelib
+from patteRNA import version
+from patteRNA.HMM import HMM
+from patteRNA.DOM import DOM
+from patteRNA.GMM import GMM
 
 model_map = {'HMM': HMM,
              'DOM': DOM,

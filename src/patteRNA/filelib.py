@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pathlib
 import json
-from src.patteRNA import rnalib
+from patteRNA import rnalib
 
 
 HEADER_COL_ORDER = {'transcript': 0,

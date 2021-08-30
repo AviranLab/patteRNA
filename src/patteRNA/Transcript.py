@@ -1,5 +1,5 @@
 import numpy as np
-from src.patteRNA import rnalib
+from patteRNA import rnalib
 
 
 class Transcript:

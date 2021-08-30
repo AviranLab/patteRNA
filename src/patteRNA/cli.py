@@ -2,14 +2,14 @@
 
 import logging
 import sys
-from src.patteRNA.Dataset import Dataset
-from src.patteRNA.Model import Model
-from src.patteRNA.ScoringManager import ScoringManager
-from src.patteRNA.TrainingManager import TrainingManager
-from src.patteRNA.DOM import DOM
-from src.patteRNA.GMM import GMM
-from src.patteRNA.HMM import HMM
-from src.patteRNA import arglib, filelib, misclib, timelib, logger_config
+from patteRNA.Dataset import Dataset
+from patteRNA.Model import Model
+from patteRNA.ScoringManager import ScoringManager
+from patteRNA.TrainingManager import TrainingManager
+from patteRNA.DOM import DOM
+from patteRNA.GMM import GMM
+from patteRNA.HMM import HMM
+from patteRNA import arglib, filelib, misclib, timelib, logger_config
 
 
 def main(testcmd=None):

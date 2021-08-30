@@ -6,8 +6,8 @@ import numpy as np
 from scipy.stats import genlogistic
 from scipy.ndimage.filters import median_filter, uniform_filter1d
 from functools import partial
-from .LBC import LBC
-from . import rnalib, filelib, timelib, misclib, viennalib
+from patteRNA.LBC import LBC
+from patteRNA import rnalib, filelib, timelib, misclib, viennalib
 from tqdm import tqdm
 
 LOCK = multiprocessing.Lock()

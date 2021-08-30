@@ -1,8 +1,8 @@
 import logging
 import numpy as np
 from scipy.stats import entropy
-from .Transcript import Transcript
-from . import filelib
+from patteRNA.Transcript import Transcript
+from patteRNA import filelib
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
 import argparse
 import logging
 import multiprocessing
-from src.patteRNA import version
+from patteRNA import version
 
 logger = logging.getLogger(__name__)
 
