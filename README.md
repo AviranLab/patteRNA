@@ -1,4 +1,4 @@
-![patteRNA](docs/source/_static/img/patterna.png)
+![patteRNA](patterna.png)
 
 # *patteRNA*
 
