@@ -22,7 +22,7 @@ class TrainingManager:
     """
 
     def __init__(self, model, mp_tasks, output_dir, reference=False,
-                 k=-1, maxiter=100, epsilon=1e-4):
+                 k=-1, maxiter=100, epsilon=1e-4, nan=False):
 
         # Model and computing paramters
         self.model = model
@@ -33,6 +33,7 @@ class TrainingManager:
         self.k = k
         self.maxiter = maxiter
         self.epsilon = epsilon
+        self.nan = nan
 
         # Training data
         self.training_set = None
@@ -64,10 +65,7 @@ class TrainingManager:
                 prev_model = deepcopy(self.model)  # Save previous model state
 
                 # Train next model size
-                if self.reference:
-                    self._train(k, maxiter=1, epsilon=np.Inf)  # Train next model size
-                else:
-                    self._train(k, self.maxiter, self.epsilon)  # Train next model size
+                self._train(k, self.maxiter, self.epsilon, self.reference)
 
                 self.model.compute_bic(self.logL, self.training_set.stats['n_obs'])  # Model selection criteria
                 logger.info(" >> BIC: {:.3e}".format(self.model.BIC))
@@ -76,7 +74,7 @@ class TrainingManager:
             # so overload back to last model
             logger.info("Optimal k={:d}".format(self.model.emission_model.k))
         else:
-            self._train(self.k, self.maxiter, self.epsilon)  # Train a specified model size
+            self._train(self.k, self.maxiter, self.epsilon, self.reference)  # Train a specified model size
 
         fp_fit = os.path.join(self.output_dir, 'fit.svg')
         self.save_snapshot(fp_fit)  # Save visualization
@@ -84,7 +82,7 @@ class TrainingManager:
 
         return self.model
 
-    def _train(self, k, maxiter, epsilon):
+    def _train(self, k, maxiter, epsilon, reference=False):
         """
         Perform EM optimization of model parameters for a given model complexity, k.
         Args:
@@ -96,6 +94,10 @@ class TrainingManager:
 
         """
 
+        if reference:
+            maxiter = 1
+            epsilon = np.Inf
+
         self.model.reset()
         self.model.initialize(k, self.training_set.stats)
 
@@ -105,7 +107,7 @@ class TrainingManager:
 
         converged = False
         iter_count = 0
-        prev_logl = -np.Inf
+        prev_logl = np.finfo(np.float64).min
 
         while iter_count <= maxiter:
             logger.debug("(k={}) EM iteration #{:d}".format(self.model.emission_model.k, iter_count + 1))
@@ -127,7 +129,7 @@ class TrainingManager:
             # logger.warning(clock.tock(pretty=True))
 
             # Update parameters from transcript-level pseudocounts
-            self.logL = self.model.update_from_pseudocounts(partial_pseudocounts)
+            self.logL = self.model.update_from_pseudocounts(partial_pseudocounts, nan=self.nan)
             logger.debug(self.model.take_snapshot())
             logger.debug('{}: logL = {:.1f}'.format(iter_count, self.logL))
             iter_count += 1
@@ -157,14 +159,6 @@ class TrainingManager:
     def em_worker(transcript, model):
 
         logl = model.e_step(transcript)
-        params = model.m_step(transcript)
-
-        return {'logL': logl, **params}
-
-    @staticmethod
-    def em_worker_ref(transcript, model):
-
-        logl = (transcript)
         params = model.m_step(transcript)
 
         return {'logL': logl, **params}

@@ -3,8 +3,20 @@ All notable changes to patteRNA are documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1-beta] - 2021-08-29
+### Changes
+- Initial release implementation of logistic scoring classifier (can be turned off with `--no-vienna` or `--no-cscores` flag)
+- Added `--nan` flag to interpret missing data and `--print-nan` flag to print NaN scores
+- Improved documentation
+
+### Fixed
+- Outputs for a transcript are computed and written all at once instead of on-the-fly during parallel processing, speeding up scoring
+
+
 ## [2.0] - 2021-08-24
+### Changed
 - Re-implemented `--reference` flag to natively work with new training pipeline [PR]
+- Code optimization and cleanup
 
 ## [2.0.0-beta] - 2021-07-11
 ### Changed

@@ -1,4 +1,4 @@
-![patteRNA](patterna.png)
+![patteRNA](docs/source/_static/img/patterna.png)
 
 # *patteRNA*
 
@@ -21,13 +21,9 @@ These instructions will set up patteRNA as a command line tool on your machine.
 
 ### Prerequisites
 
-**Python 3.7 or newer**. To check the current installed version on your system, run `python3 -V`. If your version is anterior to 3.7, install version 3.7 or later. We recommend the use of virtual environments with [venv](https://docs.python.org/3/library/venv.html).
+**Python 3.7 or newer**. To check the current installed version on your system, run `python3 -V`. If your version is anterior to 3.7, install version 3.7 or later. We recommend the use of virtual environments with [venv](https://docs.python.org/3/library/venv.html). You also need the latest versions of `pip` and `setuptools`, which can be installed by typing: `python -m pip install -U pip setuptools`.
 
-You also need the latest versions of `pip` and `setuptools`, which can be installed by typing:
-
-```
-python -m pip install -U pip setuptools
-```
+**ViennaRNA Python interface**. [ViennaRNA](https://www.tbi.univie.ac.at/RNA/) is a C library of RNA folding routines. In order for patteRNA to most accurately identify motifs, the [ViennaRNA Python interface](https://www.tbi.univie.ac.at/RNA/documentation.html#interfaces) must be installed and configured for your Python environment. You should be able to run `python -c import RNA` without errors. If the ViennaRNA interface is not detected, patteRNA can still mine motifs but will be slightly less precise. Use the flag `--no-vienna` to avoid warnings.
 
 ### Installation
 
@@ -44,10 +40,11 @@ To install the Python module such that it can be executed from the command line,
 python setup.py install
 ```
 
-You can also specify a [local installation](https://packaging.python.org/tutorials/installing-packages/#installing-to-the-user-site) using the command:
+You can also specify a local installation using the commands:
 
 ```
 python setup.py install --user
+echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc; source ~/.bashrc
 ```
 
 ***Note for macOS Big Sur and Apple M1 users***: Due to an issue, you must use `pip` to run the installation. Be sure to update pip and setuptools before attempting the installation (`python -m pip install -U pip setuptools`). Use the commands:
@@ -90,11 +87,13 @@ patteRNA <probing> <output> <OPTIONS>
 All available options are accessible via `patteRNA -h` as listed below. Recommendations (when applicable) are given in the option caption. Note that switches (i.e. boolean options that do not need arguments), have defaults set to `False` and are set to `True` if provided.
 
 ```
-usage: patteRNA [-h] [--version] [-f fasta] [--reference] [-v] [-l] [--GMM]
-                [-k] [--KL-div] [-e] [-i] [-nt] [--model] [--config] [--motif]
-                [--hairpins] [--posteriors] [--viterbi] [--HDSL] [--SPP]
-                [--nan] [--no-prompt] [--min-cscores] [--no-cscores]
-                [--batch-size]
+usage: patteRNA [-h] [--version] [-v] [-f fasta] [--reference reference] [-l]
+                [--no-vienna] [--GMM] [-k kernels] [--KL-div KL-div] [-e eps]
+                [-i iter] [-t tasks] [--model model] [--motif motif]
+                [--path path] [--hairpins] [--posteriors] [--viterbi] [--HDSL]
+                [--SPP] [--nan] [--print-nan] [--no-prompt]
+                [--min-cscores min] [--no-cscores] [--batch-size size]
+                [-c length]
                 probing output
 
 Rapid mining of RNA secondary structure motifs from profiling data.
@@ -106,24 +105,26 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --version             show program's version number and exit
+  -v, --verbose         Print detailed progress logs (default: False)
   -f fasta, --fasta fasta
                         FASTA file of RNA sequences (default: None)
-  --reference           FASTA-like file of reference RNA secondary structures
+  --reference reference
+                        FASTA-like file of reference RNA secondary structures
                         in dot-bracket notation (default: None)
-  -v, --verbose         Print progress (default: False)
   -l, --log             Log transform input data (default: False)
+  --no-vienna           Do not attempt to use ViennaRNA libraries. Turns off
+                        LBC scoring classifier. (default: False)
   --GMM                 Train a Gaussian Mixture Model (GMM) during training
                         instead of a Discretized ObservationModel (DOM)
                         (default: False)
-  -k                    Number of Gaussian components per pairing state in the
-                        GMM model. By default, K is determined automatically
-                        using Bayesian Information Criteria. If K <= 0,
-                        automatic detection is enabled. Increasing K manually
-                        will make the model fit the data tighter but could
-                        result in overfitting. Fitted data should always be
-                        visually inspected after training to gauge if the
-                        model is adequate. (default: -1)
-  --KL-div              Minimum Kullback–Leibler divergence criterion for
+  -k kernels            Number of kernels per pairing state to use in the
+                        emission model. By default, k is determined
+                        automatically using Bayesian Information Criteria.
+                        Increasing k manually can more precisely fit=the data,
+                        but could result in overfitting. Fitted data should
+                        always be visually inspected after training to gauge
+                        if the model is adequate. (default: -1)
+  --KL-div KL-div       Minimum Kullback–Leibler divergence criterion for
                         building the training set. The KL divergence measures
                         the difference in information content between the full
                         dataset and the training set. The smaller the value,
@@ -132,20 +133,26 @@ optional arguments:
                         produce a larger training set and increase both
                         runtime and RAM consumption during training. (default:
                         0.001)
-  -e , --epsilon        Convergence criterion (default: 0.01)
-  -i , --maxiter        Maximum number of training iterations (default: 250)
-  -nt , --n-tasks       Number of parallel processes. By default all available
+  -e eps, --epsilon eps
+                        Convergence criterion (default: 0.01)
+  -i iter, --maxiter iter
+                        Maximum number of training iterations (default: 250)
+  -t tasks, --n-tasks tasks
+                        Number of parallel processes. By default all available
                         CPUs are used. (default: -1)
-  --model               Trained .json model (version 2.0+ models only)
+  --model model         Trained .json model (version 2.0+ models only)
                         (default: None)
-  --config 
-  --motif               Score target motif declared using an extended dot-
+  --motif motif         Score target motif declared using an extended dot-
                         bracket notation. Paired and unpaired bases are
                         denoted using parentheses '()' and dots '.',
                         respectively. A stretch of consecutive characters is
                         declared using the format <char>{<from>, <to>}. Can be
                         used in conjunction with --mask to modify the expected
                         underlying sequence of pairing states. (default: None)
+  --path path           Target binary state sequence. When used in conjunction
+                        with --motif, sequence constraintsfrom the motif
+                        applied, but the state sequence provided by --path is
+                        used to computeraw scores. (default: None)
   --hairpins            Score a representative set of hairpins (stem lengths 4
                         to 15; loop lengths 3 to 10). Automatically enabled
                         when the --HDSL flag is used. This flag overrides any
@@ -163,22 +170,29 @@ optional arguments:
   --SPP                 Smoothed P(paired). Quantifies structuredness across
                         the input data via local pairing probabilities. This
                         flag activates --posteriors. (default: False)
-  --nan                 If NaN are considered informative in term of pairing
-                        state, use this flag. However, note that this can lead
-                        to unstable results and is therefore not recommended
-                        if data quality is low or long runs of NaN exist in
-                        the data. (default: False)
+  --nan                 To attempt statistical inferences on the pairing state
+                        of nucleotides with missing data when training, set
+                        this flag. Note that this can lead to meaningless
+                        results if observation quality is low or long runs of
+                        missing data exist in the data. (default: False)
+  --print-nan           Include NaN scores when writing scores to file. If the
+                        data contain large runs ofmissing data, setting this
+                        flag may make score files very large. (default: False)
   --no-prompt           Do not prompt a question if existing output files
-                        could be overwritten. Useful for automation using
+                        could be overwritten. Files in output directory will
+                        be overwritten if present. Useful for automation using
                         scripts or for running patteRNA on computing servers.
                         (default: False)
-  --min-cscores         Minimum number of scores to sample during construction
+  --min-cscores min     Minimum number of scores to sample during construction
                         of null distributions to usefor c-score normalization
                         (default: 1000)
   --no-cscores          Suppress the computation of c-scores during the
                         scoring phase (default: False)
-  --batch-size          Number of transcripts to process at once using a pool
+  --batch-size size     Number of transcripts to process at once using a pool
                         of parallel workers (default: 100)
+  -c length, --context length
+                        Flanking distance to use when computing motif energy
+                        loss (default: 40)
 ```
 
 
@@ -208,7 +222,6 @@ patteRNA supports structural motifs (via the `--motif` flag) that contain no gap
 #### Motif Specification
 Standard motifs can be declared using an extended dot-bracket notation where stretches of consecutive repeats are denoted by curly brackets. For instance, an hairpin of stem size 4 and loop size 5 can be declared by `((((.....))))` (full form) or alternatively `({4}.{5}){4}` (short form). Curly brackets can also be used to indicate stretches of varying length using the convention `{<from>,<to>}`. For example, all loops of size 2 to 7 can be declared as `.{2,7}`. By default, RNA sequences are used to ensure a scored region sequence is compatible with the folding of the motif. RNA sequences must be provided in a FASTA file inputted using the option `-f <fasta-file>`. See [example commands](#examples).
 
-
 #### Score Files
 The results of a motif search are saved in the file `scores.txt` in the output directory. This file contains putative sites  the following columns:
 
@@ -216,6 +229,9 @@ The results of a motif search are saved in the file `scores.txt` in the output d
 - Site start position (uses a 1-based encoding)
 - Score
 - c-score
+- Binary cross entropy (BCE)
+- Motif energy loss (MEL)
+- Prob(motif) (computed via logistic binary classifier)
 - Motif in dot-bracket notation
 - Nucleotide sequence
 
@@ -265,6 +281,9 @@ HDSL is a measure of local structure that assists in converting patteRNA's predi
 ## Citation
 
 If you used patteRNA in your research, please reference the following citations depending on which version of patteRNA you utilized.
+
+**Version 2.1**: \
+Radecki P., Uppuluri R., Deshpande K., and Aviran S. (2021) "Accurate Detection of RNA Stem-Loops in Structurome Data Reveals Widespread Association with Protein Binding Sites." *RNA Biology*. doi TBA.
 
 **Version 2.0**: \
 Radecki P., Uppuluri R., and Aviran S. (2021) "Rapid Structure-Function Insights via Hairpin-Centric Analysis of Big RNA Structure Probing Datasets." *NAR Genomics and Bioinformatics* 3(3). doi: [10.1093/nargab/lqab073](https://doi.org/10.1093/nargab/lqab073).

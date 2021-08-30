@@ -34,37 +34,39 @@ def parse_cl_args(inputargs):
                         metavar="output",
                         type=str,
                         help="Output directory")
+    parser.add_argument("-v", "--verbose",
+                        action="store_true",
+                        help="Print detailed progress logs")
     parser.add_argument("-f", "--fasta",
                         metavar="fasta",
                         default=None,
                         type=str,
                         help="FASTA file of RNA sequences")
     parser.add_argument("--reference",
-                        metavar="",
+                        metavar="reference",
                         default=None,
                         type=str,
                         help="FASTA-like file of reference RNA secondary structures in dot-bracket notation")
-    parser.add_argument("-v", "--verbose",
-                        action="store_true",
-                        help="Print progress")
     parser.add_argument("-l", "--log",
                         action="store_true",
                         help="Log transform input data")
+    parser.add_argument('--no-vienna',
+                        action='store_true',
+                        help="Do not attempt to use ViennaRNA libraries. Turns off LBC scoring classifier.")
     parser.add_argument("--GMM",
                         action="store_true",
                         help="Train a Gaussian Mixture Model (GMM) during training instead of a Discretized Observation"
                              "Model (DOM)")
     parser.add_argument("-k",
-                        metavar="",
+                        metavar="kernels",
                         type=int,
                         default=-1,
-                        help="Number of Gaussian components per pairing state in the GMM model. By default, K is "
-                             "determined automatically using Bayesian Information Criteria. If K <= 0, automatic "
-                             "detection is enabled. Increasing K manually will make the model fit the data tighter but "
-                             "could result in overfitting. Fitted data should always be visually inspected after "
-                             "training to gauge if the model is adequate.")
+                        help="Number of kernels per pairing state to use in the emission model. By default, k is "
+                             "determined automatically using Bayesian Information Criteria. Increasing k manually can "
+                             "more precisely fit=the data, but could result in overfitting. Fitted data should always "
+                             "be visually inspected after training to gauge if the model is adequate.")
     parser.add_argument("--KL-div",
-                        metavar="",
+                        metavar="KL-div",
                         type=float,
                         default=0.001,
                         help="Minimum Kullback–Leibler divergence criterion for building the training set. The KL "
@@ -73,38 +75,40 @@ def parse_cl_args(inputargs):
                              "set will be with respect to the full dataset. However, this will produce a "
                              "larger training set and increase both runtime and RAM consumption during training.")
     parser.add_argument("-e", "--epsilon",
-                        metavar="",
+                        metavar="eps",
                         type=float,
                         default=1e-2,
                         help="Convergence criterion")
     parser.add_argument("-i", "--maxiter",
-                        metavar="",
+                        metavar="iter",
                         type=int,
                         default=250,
                         help="Maximum number of training iterations")
-    parser.add_argument("-nt", "--n-tasks",
-                        metavar="",
+    parser.add_argument("-t", "--n-tasks",
+                        metavar="tasks",
                         type=int,
                         default=-1,
                         help="Number of parallel processes. By default all available CPUs are used.")
     parser.add_argument("--model",
-                        metavar="",
+                        metavar="model",
                         type=str,
                         default=None,
                         help="Trained .json model (version 2.0+ models only)")
-    parser.add_argument("--config",
-                        metavar="",
-                        type=str,
-                        default=None,
-                        help="")
     parser.add_argument("--motif",
-                        metavar="",
+                        metavar="motif",
                         type=str,
                         default=None,
                         help="Score target motif declared using an extended dot-bracket notation. Paired and unpaired "
                              "bases are denoted using parentheses '()' and dots '.', respectively. A stretch of "
                              "consecutive characters is declared using the format <char>{<from>, <to>}. Can be used in "
                              "conjunction with --mask to modify the expected underlying sequence of pairing states.")
+    parser.add_argument("--path",
+                        metavar="path",
+                        type=str,
+                        default=None,
+                        help="Target binary state sequence. When used in conjunction with --motif, sequence constraints"
+                             "from the motif applied, but the state sequence provided by --path is used to compute"
+                             "raw scores.")
     parser.add_argument("--hairpins",
                         action="store_true",
                         help="Score a representative set of hairpins (stem lengths 4 to 15; loop lengths 3 to 10). "
@@ -128,15 +132,20 @@ def parse_cl_args(inputargs):
                              "probabilities. This flag activates --posteriors.")
     parser.add_argument("--nan",
                         action="store_true",
-                        help="If NaN are considered informative in term of pairing state, use this flag. However, "
-                             "note that this can lead to unstable results and is therefore not recommended if data "
-                             "quality is low or long runs of NaN exist in the data.")
+                        help="To attempt statistical inferences on the pairing state of nucleotides with missing "
+                             "data when training, set this flag. Note that this can lead to meaningless results if "
+                             "observation quality is low or long runs of missing data exist in the data.")
+    parser.add_argument("--print-nan",
+                        action="store_true",
+                        help="Include NaN scores when writing scores to file. If the data contain large runs of"
+                             "missing data, setting this flag may make score files very large.")
     parser.add_argument("--no-prompt",
                         action="store_true",
-                        help="Do not prompt a question if existing output files could be overwritten. Useful for "
-                             "automation using scripts or for running patteRNA on computing servers.")
+                        help="Do not prompt a question if existing output files could be overwritten. Files in output "
+                             "directory will be overwritten if present. Useful for automation using scripts or for "
+                             "running patteRNA on computing servers. ")
     parser.add_argument("--min-cscores",
-                        metavar="",
+                        metavar="min",
                         type=int,
                         default=1000,
                         help="Minimum number of scores to sample during construction of null distributions to use"
@@ -145,17 +154,20 @@ def parse_cl_args(inputargs):
                         action="store_true",
                         help="Suppress the computation of c-scores during the scoring phase")
     parser.add_argument("--batch-size",
-                        metavar="",
+                        metavar="size",
                         type=int,
                         default=100,
                         help="Number of transcripts to process at once using a pool of parallel workers")
+    parser.add_argument('-c', '--context',
+                        metavar="length",
+                        type=int,
+                        default=40,
+                        help="Flanking distance to use when computing motif energy loss")
 
     args = parser.parse_args(inputargs)  # Parse input args
 
     input_files = dict.fromkeys(['probing', 'fasta', 'reference', 'model'], None)
     run_config = dict()
-    # run_config = dict.fromkeys(['output', 'log', 'k', 'training', 'posteriors', 'viterbi', 'motif', 'scoring',
-    #                            'no_cscores', 'batch_size', 'hdsl'], None)
 
     for attr, value in args.__dict__.items():
 
@@ -176,16 +188,6 @@ def parse_cl_args(inputargs):
         if run_config['motif'] is not None:
             logger.warning('Configuration warning: --motif cannot be used in conjunction with --hairpins')
 
-    # Warn about --reference flag
-    if input_files['reference']:
-        logger.warning('Configuration warning: the --reference flag is not yet supported on this version '
-                       'of patteRNA')
-
-    # Warn about --config flag
-    if run_config['config']:
-        logger.warning('Configuration warning: the --config flag is not yet supported on this version '
-                       'of patteRNA')
-
     if run_config['HDSL']:
         run_config['motif'] = "({4,15}.{3,10}){4,15}"
         run_config['hairpins'] = True
@@ -204,7 +206,7 @@ def parse_cl_args(inputargs):
         run_config['training'] = True
 
     # Set scoring configuration flag
-    if run_config['HDSL'] or run_config['posteriors'] or run_config['motif'] or run_config['viterbi'] is not None:
+    if run_config['posteriors'] or run_config['motif'] or run_config['viterbi']:
         run_config['scoring'] = True
     else:
         run_config['scoring'] = False
@@ -212,19 +214,30 @@ def parse_cl_args(inputargs):
     if run_config['n_tasks'] == -1:
         run_config['n_tasks'] = multiprocessing.cpu_count()
 
-    run_config['reference'] = False
+    run_config['reference'] = False  # Even if reference data is provided, we need to inspect it before deciding to
+    # actually use it for training. So, for now, run_config['reference'] is False.
+    run_config['hdsl_params'] = (1.2, 0.5)
 
     return input_files, run_config
 
 
 def summarize_job(input_files, run_config):
-    """Text summary of job arguments for main output."""
+    """
+    Generate concise text summary of config arguments for command line printing.
+
+    Args:
+        input_files (dict): Dictionary of input files
+        run_config (dict): Dictionary of configuration parameters
+
+    Returns:
+        text (str): String representation of run configuration
+    """
 
     space = '\n'
-    tab = ' '*7
+    tab = ' ' * 7
     text = "Summarizing job ... \n"
     text += space
-    text += tab+"Input files:\n"
+    text += tab + "Input files:\n"
     text += 2 * tab + "probing: {}\n".format(input_files['probing'])
     if input_files['fasta'] is not None:
         text += 2 * tab + "fasta: {}\n".format(input_files['fasta'])
@@ -234,7 +247,7 @@ def summarize_job(input_files, run_config):
         text += 2 * tab + "model: {}\n".format(input_files['model'])
     text += space
 
-    text += tab+"Configuration parameters:\n"
+    text += tab + "Configuration parameters:\n"
     text += 2 * tab + "log: {}\n".format(run_config['log'])
     text += 2 * tab + "training: {}\n".format(run_config['training'])
     text += 2 * tab + "scoring: {}\n".format(run_config['scoring'])
@@ -250,6 +263,8 @@ def summarize_job(input_files, run_config):
         text += 2 * tab + "hairpins: {}\n".format(run_config['hairpins'])
     if run_config['motif'] is not None:
         text += 2 * tab + "motif: {}\n".format(run_config['motif'])
+    if run_config['path'] is not None:
+        text += 2 * tab + "path: {}\n".format(run_config['path'])
     if run_config['posteriors']:
         text += 2 * tab + "posteriors: {}\n".format(run_config['posteriors'])
     if run_config['HDSL']:
@@ -266,11 +281,21 @@ def summarize_job(input_files, run_config):
 
 
 def summarize_config(input_files, run_config):
-    """Text summary of config arguments for logger."""
+    """
+    Generate exhaustive text summary of config arguments for logger.
+
+    Args:
+        input_files (dict): Dictionary of input files
+        run_config (dict): Dictionary of configuration parameters
+
+    Returns:
+        text (str): String representation of run configuration
+    """
+
     hline = "========================================================="
     text = "Summarizing configuration:" \
            "\n{}\n" \
-           "Running patteRNA mining with the following parameters:" \
+           "Running patteRNA with the following parameters:" \
            "\n{}\n".format(hline, hline)
 
     text += "Input files:\n"

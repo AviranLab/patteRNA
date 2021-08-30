@@ -90,7 +90,7 @@ class Dataset:
 
     def spawn_training_set(self, kl_div):
         """
-        Spawn a training set (smaller or equal size to overal data) based on KL divergence criteria.
+        Spawn a training set (smaller than or equal size to overall data) based on KL divergence criteria.
 
         Transcripts are incrementally added to a training Dataset (high quality transcripts first) until
         the training set's KL divergence from the overall data falls below the provided threshold.

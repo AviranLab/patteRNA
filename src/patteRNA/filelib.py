@@ -11,7 +11,14 @@ HEADER_COL_ORDER = {'transcript': 0,
                     'end': 1.1,
                     'score': 2,
                     'c-score': 3,
-                    'motif': 4,
+                    'bce': 3.1,
+                    'BCE': 3.11,
+                    'deltaG': 3.2,
+                    'MEL': 3.21,
+                    'lbc-prob': 3.3,
+                    'Prob(motif)': 3.3,
+                    'dot-bracket': 4,
+                    'motif': 4.1,
                     'path': 4.1,
                     'seq': 5}
 
@@ -231,8 +238,7 @@ def prepare_output_dir(run_config):
         if response == 'yes':
             for file_path in overwite_files:
                 os.remove(file_path)
-            pass
-        else:
+        elif response == 'no':
             sys.exit()
 
 

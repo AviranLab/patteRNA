@@ -56,7 +56,13 @@ class DOM:
         Compute emission probabilities according to the discretized observation model.
 
         This amounts to simply accessing the correct indices of the DOM pdf matrix, chi.
+
+        Args:
+            transcript (src.patteRNA.Transcript.Transcript): Transcript to process
+            reference (bool): Whether or not it's a reference transcript
         """
+        if reference:
+            pass
         transcript.B = self.chi[:, transcript.obs_dom-1]
 
     @staticmethod
@@ -75,13 +81,16 @@ class DOM:
 
         return params
 
-    def update_from_pseudocounts(self, pseudocounts):
+    def update_from_pseudocounts(self, pseudocounts, nan=False):
         self.chi = pseudocounts['chi'] / pseudocounts['chi_norm'][:, None]
-        self.scale_chi()
+        self.scale_chi(nan=nan)
 
-    def scale_chi(self):
-        self.chi[:, :-1] = 0.9 * self.chi[:, :-1] / np.sum(self.chi[:, :-1], axis=1)[:, np.newaxis]
-        self.chi[:, -1] = 0.1  # NaN observations
+    def scale_chi(self, nan=False):
+        if nan:
+            self.chi[:, :] = self.chi[:, :] / np.sum(self.chi[:, :], axis=1)[:, np.newaxis]
+        else:
+            self.chi[:, :-1] = 0.9 * self.chi[:, :-1] / np.sum(self.chi[:, :-1], axis=1)[:, np.newaxis]
+            self.chi[:, -1] = 0.1  # NaN observations
 
     def snapshot(self):
         text = ""

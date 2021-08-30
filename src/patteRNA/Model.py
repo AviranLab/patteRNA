@@ -42,7 +42,7 @@ class Model:
         logl = self.forward_backward(transcript)  # Compute alpha, beta, c for transcript
 
         # Compute joint event probabilities - xi
-        transcript.xi = np.zeros((self.states, self.states, transcript.T), dtype=np.float)
+        transcript.xi = np.zeros((self.states, self.states, transcript.T), dtype=float)
         for t in range(transcript.T - 1):
             for i in range(self.states):
                 for j in range(self.states):
@@ -61,8 +61,8 @@ class Model:
         transcript.logl = 0
 
         # Initialization
-        transcript.alpha = np.zeros((2, transcript.T), dtype=np.float)
-        transcript.c = np.zeros(transcript.T, dtype=np.float)
+        transcript.alpha = np.zeros((2, transcript.T), dtype=float)
+        transcript.c = np.zeros(transcript.T, dtype=float)
 
         # Handle path initiation (pi: Probability of starting as state 0 / 1)
         transcript.alpha[:, 0] = self.structure_model.pi * transcript.B[:, 0]
@@ -79,7 +79,7 @@ class Model:
             transcript.logl += -np.log(transcript.c[t])
 
         # Backward pass: compute beta
-        transcript.beta = np.zeros((2, transcript.T), dtype=np.float)
+        transcript.beta = np.zeros((2, transcript.T), dtype=float)
         transcript.beta[:, -1] = 1  # Set last state as equally favorable
 
         for t in range(transcript.T - 1)[::-1]:
@@ -97,7 +97,7 @@ class Model:
 
         return params_transcript
 
-    def update_from_pseudocounts(self, partial_pseudocounts):
+    def update_from_pseudocounts(self, partial_pseudocounts, nan=False):
 
         params = partial_pseudocounts[0].keys()  # Get keys (parameter names)
 
@@ -109,7 +109,7 @@ class Model:
                 pseudocounts[param] += params[param]
 
         self.structure_model.update_from_pseudocounts(pseudocounts)
-        self.emission_model.update_from_pseudocounts(pseudocounts)
+        self.emission_model.update_from_pseudocounts(pseudocounts, nan=nan)
 
         return pseudocounts['logL']  # Total logL over all transcripts
 

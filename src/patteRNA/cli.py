@@ -1,4 +1,4 @@
-"""Command line wrapper for patteRNA."""
+"""Command line interface for patteRNA."""
 
 import logging
 import sys
@@ -13,11 +13,20 @@ from src.patteRNA import arglib, filelib, misclib, timelib, logger_config
 
 
 def main(testcmd=None):
+    """
+    Main execution thread for patteRNA. Handles input arguments, reads input data,
+    uses TrainingManager and ScoringManager objects to execute requested computations.
+
+    Args:
+        testcmd: Optional string input containing a mock input command syntax. Useful for running patteRNA
+        for testing or via programmatic interfaces.
+
+    """
 
     main_clock = timelib.Clock()
     main_clock.tick()  # Start task timer for overall process
 
-    # Parse command line arguments
+    # Parse command line arguments if a manual test command is not provided
     if testcmd is None:
         input_files, run_config = arglib.parse_cl_args(sys.argv[1:])
     else:
@@ -35,9 +44,8 @@ def main(testcmd=None):
     fp_sequences = input_files['fasta']
     fp_references = input_files['reference']
 
-    # Parse input data
+    # Initialize dataset and parse input data
     data = Dataset(fp_observations, fp_sequences, fp_references)  # Initialize Dataset object
-
     clock = timelib.Clock()  # Clock for timing individual steps
     logger.info("Loading input data")
     clock.tick()
@@ -68,7 +76,8 @@ def main(testcmd=None):
         model = Model(structure_model=HMM(), emission_model=em, reference=run_config['reference'])
 
         if run_config['reference']:
-            # Spawn training set RNAs
+
+            # Spawn training set of reference RNAs
             logger.info("Using reference set.")
             clock.tick()
             reference_set = data.spawn_reference_set()
@@ -86,12 +95,12 @@ def main(testcmd=None):
                                                                           reference_set.stats['p_ref']))
 
             tm = TrainingManager(model=model, mp_tasks=run_config['n_tasks'], output_dir=run_config['output'],
-                                 k=run_config['k'], reference=True)
+                                 k=run_config['k'], reference=True, nan=run_config['nan'])
             tm.import_data(reference_set)
 
         else:
 
-            # Spawn training set RNAs
+            # Spawn training set of RNAs
             logger.info("Spawning training set")
             clock.tick()
             training_set, kl_div = data.spawn_training_set(kl_div=run_config['KL_div'])
@@ -108,14 +117,14 @@ def main(testcmd=None):
                                                                           kl_div))
 
             tm = TrainingManager(model=model, mp_tasks=run_config['n_tasks'], output_dir=run_config['output'],
-                                 k=run_config['k'])
+                                 k=run_config['k'], nan=run_config['nan'])
             tm.import_data(training_set)
 
         clock.tick()
         tm.execute_training()
         logger.info("Training phase done in {}".format(misclib.seconds_to_hms(clock.tock())))
 
-    else:
+    else:  # If not training, we must be loading a model for scoring
 
         model = Model()
         model.load(filelib.parse_model(input_files['model']))
@@ -124,8 +133,8 @@ def main(testcmd=None):
                                                              input_files['model']))
 
     if run_config['scoring']:
-        logger.info("Initiating scoring phase")
 
+        logger.info("Initiating scoring phase")
         sm = ScoringManager(model, run_config)  # Scoring manager object
 
         logger.info("Scoring set summary: \n"

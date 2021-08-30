@@ -36,11 +36,12 @@ class Transcript:
 
     def find_valid_sites(self, motif):
         self.valid_sites[motif] = set()
-        pairing_table, _ = rnalib.compute_pairing_partners(motif)
+        pairing_table, ups = rnalib.compute_pairing_partners(motif)
         m = len(motif)
         for i in range(self.T - m + 1):
             if rnalib.is_valid_pairing(self.seq[i:i+m], pairing_table):
                 self.valid_sites[motif].add(i)
+        return pairing_table, ups
 
     def find_nan_sites(self, length):
         self.nan_sites[length] = set()

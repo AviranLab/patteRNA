@@ -113,6 +113,13 @@ def compute_pairing_partners(db, ignore_invalid=False):
     return sorted(partners, key=lambda bp: bp[0]), unpaired
 
 
+def compile_motif_constraints(bps, ups, start):
+    bps = [(bp[0] + start, bp[1] + start) for bp in bps]
+    ups = [(up[0] + start, -999) for up in ups]
+    bps.extend(ups)
+    return bps
+
+
 def dot2states(dot):
     """Translate a dot-bracket string in a sequence of numerical states"""
 

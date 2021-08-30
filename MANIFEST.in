@@ -1,2 +1,2 @@
 graft src
-include README.md CHANGES.txt LICENSE.txt sample_data/*
+include README.md CHANGES.txt LICENSE.txt patterna.png sample_data/*

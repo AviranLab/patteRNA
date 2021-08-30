@@ -6,7 +6,8 @@ import numpy as np
 from scipy.stats import genlogistic
 from scipy.ndimage.filters import median_filter, uniform_filter1d
 from functools import partial
-from . import rnalib, filelib, timelib, misclib
+from .LBC import LBC
+from . import rnalib, filelib, timelib, misclib, viennalib
 from tqdm import tqdm
 
 LOCK = multiprocessing.Lock()
@@ -23,6 +24,8 @@ class ScoringManager:
         self.motifs = []
         self.cscore_dists = None
         self.dataset = None
+        self.no_vienna = run_config['no_vienna']
+        self.lbc = LBC()
 
         if run_config['motif'] is not None:
             self.parse_motifs()
@@ -57,7 +60,15 @@ class ScoringManager:
                           'min_cscores': self.run_config['min_cscores'],
                           'batch_size': self.run_config['batch_size'],
                           'motifs': self.motifs,
-                          'cscore_dists': None}
+                          'path': self.run_config['path'],
+                          'context': self.run_config['context'],
+                          'cscore_dists': None,
+                          'no_vienna': self.no_vienna,
+                          'energy': ~np.any([self.no_vienna,
+                                             self.run_config['no_cscores'],
+                                             not viennalib.vienna_imported]),
+                          'lbc': self.lbc,
+                          'hdsl_params': self.run_config['hdsl_params']}
 
         self.pool_init()  # Initialize parallelized pool
 
@@ -77,7 +88,12 @@ class ScoringManager:
 
                 try:
 
-                    worker = partial(self.sample_worker, batch=cscore_batch)
+                    if scoring_config['path']:
+                        path = np.array(list(scoring_config['path']), dtype=int)
+                    else:
+                        path = None
+
+                    worker = partial(self.sample_worker, path=path, batch=cscore_batch)
                     samples_pool = self.mp_pool.imap_unordered(worker, self.motifs)
 
                     for (motif, samples) in samples_pool:
@@ -101,8 +117,9 @@ class ScoringManager:
         n_batches = len(self.dataset.rnas) // scoring_config['batch_size'] + 1  # Number of batches
 
         if self.motifs:
-            header = "transcript start score c-score motif seq\n"
-            open(scoring_config['fp_scores_pre'], 'w').write(header)
+            header = "transcript\tstart score c-score BCE MEL Prob(motif) motif path seq\n"
+            with open(scoring_config['fp_scores_pre'], 'w') as f:
+                f.write(header)
 
         logger.info("Executing scoring")
         clock.tick()
@@ -115,7 +132,6 @@ class ScoringManager:
             # Process batches sequentially
             for i, batch in enumerate(batches):
 
-                # print("Batch {} of {}".format(i+1, n_batches))
                 self.pool_init()
                 batch.pre_process(self.model)
 
@@ -150,104 +166,40 @@ class ScoringManager:
                     filelib.write_score_file(sorted(scores, key=lambda score: score['score'], reverse=True),
                                              scoring_config['fp_scores'])
                 else:
-                    filelib.write_score_file(sorted(scores, key=lambda score: score['c-score'], reverse=True),
-                                             scoring_config['fp_scores'])
+                    if scoring_config['energy']:
+                        filelib.write_score_file(sorted(scores, key=lambda score: score['Prob(motif)'], reverse=True),
+                                                 scoring_config['fp_scores'])
+                    else:
+                        filelib.write_score_file(sorted(scores, key=lambda score: score['c-score'], reverse=True),
+                                                 scoring_config['fp_scores'])
                 os.remove(scoring_config['fp_scores_pre'])  # Clean-up
         logger.info(' ... done in {}'.format(misclib.seconds_to_hms(clock.tock())))
 
     @staticmethod
-    def sample_worker(motif, batch):
+    def sample_worker(motif, path, batch):
+
+        if path is None:
+            path = rnalib.dot2states(motif)
 
         scores = []
         for transcript in batch.rnas.values():
-            scores.extend(get_null_scores(transcript, motif))
+            scores.extend(get_null_scores(transcript, motif, path))
 
         return motif, scores
 
     @staticmethod
     def score_worker(transcript, model, config):
 
-        model.e_step(transcript)
-        transcript.compute_log_B_ratios()
-
-        if config['viterbi']:
-            vp = model.viterbi_decoding(transcript)  # Viterbi algorithm
-            path = "".join([str(i) for i in vp])
-            LOCK.acquire()
-            with open(config['fp_viterbi'], "a") as f:
-                f.write(">{}\n{}\n".format(transcript.name, path))
-            LOCK.release()
-
-        if config['posteriors']:
-            transcript.gamma /= np.sum(transcript.gamma, axis=0)[np.newaxis, :]
-            LOCK.acquire()
-            with open(config['fp_posteriors'], "a") as f:
-                f.write("> {}\n".format(transcript.name))
-                f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in transcript.gamma[0, :]])))
-            LOCK.release()
-
-        # Smoothed P(paired) measure --> HDSL without augmentation
-        if config['spp']:
-            spp_tmp = transcript.gamma[1, :]  # No augmentation
-            spp_tmp = uniform_filter1d(spp_tmp, size=5)  # Local mean
-            spp = median_filter(spp_tmp, size=15)  # Local median
-
-            LOCK.acquire()
-            with open(config['fp_spp'], "a") as f:
-                f.write("> {}\n".format(transcript.name))
-                f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in spp])))
-            LOCK.release()
-
-        if config['motifs']:
-
-            scores = []
-            for motif in config['motifs']:
-                path = rnalib.dot2states(motif)
-                transcript.find_valid_sites(motif)
-                scores_tmp = list(map(lambda start: score_path(transcript, start, path, motif),
-                                      transcript.valid_sites[motif]))
-                if config['suppress_nan']:
-                    scores_tmp = list(filter(lambda score: ~np.isnan(score['score']), scores_tmp))
-                if config['cscore_dists'] is not None:
-                    compute_cscores(scores_tmp, config['cscore_dists'])
-                scores += scores_tmp
-
-            LOCK.acquire()
-            with open(config['fp_scores_pre'], "a") as f:
-                output = "".join(["{} {} {:1.2f} {:1.2f} {} {}\n".format(
-                    score['transcript'],
-                    score['start'] + 1,
-                    score['score'],
-                    score['c-score'],
-                    score['motif'],
-                    transcript.seq[score['start']:score['start'] + len(score['motif'])]) for score in scores])
-                f.write(output)
-            LOCK.release()
-
-            # Hairpin-derived structure level measure
-            if config['hdsl']:
-                hdsl_tmp = transcript.gamma[1, :]
-                for score in scores:
-                    # Profile augmentation with hairpin scores
-                    if score['c-score'] > 0.5:
-                        hdsl_tmp[score['start']:score['start'] + len(score['motif'])] += 0.2 * (score['c-score'] - 0.5)
-                hdsl_tmp[hdsl_tmp < 0] = 0
-                hdsl_tmp[hdsl_tmp > 1] = 1
-                # Smoothing steps
-                hdsl_tmp = uniform_filter1d(hdsl_tmp, size=5)  # Local mean
-                hdsl = median_filter(hdsl_tmp, size=15)  # Local median
-
-                LOCK.acquire()
-                with open(config['fp_hdsl'], "a") as f:
-                    f.write("> {}\n".format(transcript.name))
-                    f.write("{}\n".format(" ".join(["{:1.3f}".format(p) for p in hdsl])))
-                LOCK.release()
-
+        model.e_step(transcript)  # Apply model to transcripts
+        outputs = compute_outputs(transcript, model, config)
+        with LOCK as _:
+            write_outputs(outputs, config)
 
     def make_cscore_batch(self, min_sample_size):
         """
         Scan through RNAs in provided data and determine how many are needed to sufficiently
-        estimate null distributions for c-score normalization.
+        estimate null distributions for c-score normalization. Return a new Dataset with just
+        the RNAs to use for score sampling.
 
         Args:
             min_sample_size: Minimum number of samples to estimate the null score distribution for a single motif.
@@ -295,17 +247,17 @@ def count_null_sites(transcript, motif):
     return count
 
 
-def get_null_scores(transcript, motif):
-    path = rnalib.dot2states(motif)
+def get_null_scores(transcript, motif, path):
     # Get sites which violate sequence constraints
     invalid_sites = np.where(~np.in1d(range(transcript.T - len(motif) + 1), transcript.valid_sites[motif]))[0]
     null_scores = list(filter(lambda score: ~np.isnan(score['score']),
-                              map(lambda start: score_path(transcript, start, path, motif), invalid_sites)))
+                              map(lambda start: score_path(transcript, start, path, motif, None, lbc=False),
+                                  invalid_sites)))
     return [null_score['score'] for null_score in null_scores]
 
 
 def compute_cscores(scores, dists):
-    list(map(lambda score: apply_cscore(score, dists[score['motif']]), scores))
+    list(map(lambda score: apply_cscore(score, dists[score['dot-bracket']]), scores))
 
 
 def apply_cscore(score, dist):
@@ -319,19 +271,138 @@ def apply_cscore(score, dist):
     score['c-score'] = log_c
 
 
-def score_path(transcript, start, path, motif):
+def score_path(transcript, start, path, motif, pt, lbc=True, context=40):
     m = len(path)
     end = start + m - 1
 
-    if np.all(np.isnan(transcript.obs[start:end+1])):
+    bce = np.nan
+    mel = np.nan
+
+    if np.all(np.isnan(transcript.obs[start:end + 1])):
         score = np.nan
     else:
         score = 0
         score += np.log(transcript.alpha[path[0], start] / transcript.alpha[1 - path[0], start])
-        score += np.sum((2*path[1:-1] - 1)*transcript.log_B_ratio[1, start + 1:end])
+        score += np.sum((2 * path[1:-1] - 1) * transcript.log_B_ratio[1, start + 1:end])
         score += np.log(transcript.beta[path[-1], end] / transcript.beta[1 - path[-1], end])
+
+        if lbc:
+            rstart = int(np.max((0, start - context)))
+            rend = int(np.min((len(transcript.seq), end + context)))
+            start_shift = start - rstart
+            hcs = rnalib.compile_motif_constraints(pt[0], pt[1], start_shift)
+            lmfe = viennalib.fold(transcript.seq[rstart:rend])
+            lcmfe = viennalib.hc_fold(transcript.seq[rstart:rend], hcs=hcs)
+            mel = lmfe - lcmfe
+            bce = bce_loss(transcript.gamma[1, start:end + 1], path)
+
     return {'score': score,
             'c-score': None,
             'start': start,
             'transcript': transcript.name,
-            'motif': motif}
+            'dot-bracket': motif,
+            'path': "".join([str(a) for a in path]),
+            'BCE': bce,
+            'MEL': mel,
+            'Prob(motif)': np.nan,
+            'seq': transcript.seq[start:start + m]}
+
+
+def bce_loss(yhat, y):
+    assert len(yhat) == len(y)
+    return sum(
+        -yi * np.log(yhi + 1e-20) if yi == 1 else -(1 - yi) * np.log(1 - yhi + 1e-20) for yhi, yi in zip(yhat, y))
+
+
+def compute_outputs(transcript, model, config):
+    outputs = {'name': transcript.name,
+               'viterbi': '',
+               'posteriors': '',
+               'spp': '',
+               'scores_pre': '',
+               'hdsl': ''}  # Initialize outputs dictionary
+
+    if config['viterbi']:
+        vp = model.viterbi_decoding(transcript)  # Viterbi algorithm
+        outputs['viterbi'] = "> {}\n{}\n".format(transcript.name, "".join([str(i) for i in vp]))
+
+    # Posterior pairing probabilities
+    if config['posteriors']:
+        transcript.gamma /= np.sum(transcript.gamma, axis=0)[np.newaxis, :]
+        outputs['posteriors'] = "> {}\n{}\n".format(transcript.name,
+                                                    " ".join(["{:1.3f}".format(p) for p in transcript.gamma[0, :]]))
+
+        # Smoothed P(paired) measure --> HDSL without augmentation
+        if config['spp']:
+            spp_tmp = transcript.gamma[1, :]  # Raw pairing probabilities
+            spp_tmp = uniform_filter1d(spp_tmp, size=5)  # Local mean
+            spp = median_filter(spp_tmp, size=15)  # Local median
+            outputs['spp'] = "> {}\n{}\n".format(transcript.name,
+                                                 " ".join(["{:1.3f}".format(p) for p in spp]))
+
+    if config['motifs']:
+
+        transcript.compute_log_B_ratios()
+
+        scores = []
+
+        for motif in config['motifs']:
+            if config['path'] is not None:
+                path = np.array(list(config['path']), dtype=int)
+            else:
+                path = rnalib.dot2states(motif)
+
+            pt = transcript.find_valid_sites(motif)  # Returns motif base pairing list
+            scores_tmp = list(map(lambda start: score_path(transcript, start, path, motif, pt, lbc=config['energy']),
+                                  transcript.valid_sites[motif]))
+
+            if config['suppress_nan']:
+                scores_tmp = list(filter(lambda s: ~np.isnan(s['score']), scores_tmp))
+            if config['cscore_dists'] is not None:
+                compute_cscores(scores_tmp, config['cscore_dists'])
+            scores += scores_tmp
+
+        if config['energy']:
+            config['lbc'].apply_classifier(scores)
+        outputs['scores_pre'] = format_scores(scores)
+
+        # Hairpin-derived structure level measure
+        if config['hdsl']:
+            hdsl_tmp = transcript.gamma[1, :]  # Pairing probabilities
+            for score in scores:
+                # Profile augmentation with hairpin scores
+                if score['c-score'] > config['hdsl_params'][1]:
+                    end = score['start'] + len(score['dot-bracket'])
+                    boost = config['hdsl_params'][0] * (score['c-score'] - config['hdsl_params'][1])
+                    hdsl_tmp[score['start']:end] += boost
+            # Clipping to [0, 1]
+            hdsl_tmp[hdsl_tmp < 0] = 0
+            hdsl_tmp[hdsl_tmp > 1] = 1
+            # Smoothing steps
+            hdsl_tmp = uniform_filter1d(hdsl_tmp, size=5)  # Local mean
+            hdsl = median_filter(hdsl_tmp, size=15)  # Local median
+            outputs['hdsl'] = "> {}\n{}\n".format(transcript.name, " ".join(["{:1.3f}".format(p) for p in hdsl]))
+
+    return outputs
+
+
+def format_scores(scores):
+    return "".join(["{} {} {:1.2f} {:1.2f} {:1.2f} {:1.2f} {:1.3g} {} {} {}\n".format(
+        score['transcript'],
+        score['start'] + 1,
+        score['score'],
+        score['c-score'],
+        score['BCE'],
+        score['MEL'],
+        score['Prob(motif)'],
+        score['dot-bracket'],
+        score['path'],
+        score['seq']) for score in scores])
+
+
+def write_outputs(outputs, config):
+    output_types = ['viterbi', 'posteriors', 'spp', 'scores_pre', 'hdsl']
+    for output_type in output_types:
+        if outputs[output_type]:
+            with open(config[f'fp_{output_type}'], 'a') as f:
+                f.write(outputs[output_type])

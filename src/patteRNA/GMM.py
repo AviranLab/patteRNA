@@ -98,7 +98,7 @@ class GMM:
 
         return params
 
-    def update_from_pseudocounts(self, pseudocounts):
+    def update_from_pseudocounts(self, pseudocounts, nan=False):
         """
         Update emission model parameters given the relevant pseudocount sums over all transcripts.
         """
@@ -106,8 +106,7 @@ class GMM:
         self.mu = pseudocounts['mu'] / pseudocounts['mu_sigma_norm']
         self.sigma = pseudocounts['sigma'] / pseudocounts['mu_sigma_norm']
         self.w = pseudocounts['w'] / pseudocounts['w_norm']
-        self.phi = pseudocounts['phi'] / pseudocounts['phi_nu_norm']
-        # self.phi = np.array((0.05, 0.05))
+        self.phi = pseudocounts['phi'] / pseudocounts['phi_nu_norm'] if nan else np.array((0.05, 0.05))
         self.nu = pseudocounts['nu'] / pseudocounts['phi_nu_norm']
         self._state_props = pseudocounts['unpaired_prop'] / pseudocounts['unpaired_prop'].sum()
         self.setup_gmm_pdfs()  # Construct new distribution objects
@@ -118,7 +117,7 @@ class GMM:
             transcript.gamma_gmm_k[0, k, :] = self.w[0, k, np.newaxis] * self.gmm_pdfs[0][k].pdf(transcript.obs)
             transcript.gamma_gmm_k[1, k, :] = self.w[1, k, np.newaxis] * self.gmm_pdfs[1][k].pdf(transcript.obs)
 
-        transcript.gamma_gmm_k[:, :, transcript.mask_finite] += 1e-20  # Zero likelihoods cause problems so we add a small buffer
+        transcript.gamma_gmm_k[:, :, transcript.mask_finite] += 1e-20  # Padding to avoid numerical blow-ups
         transcript.gamma_gmm_k[:, :, transcript.mask_0] = np.nan  # Override zeros (would have been mapped to -Infinity)
 
     def snapshot(self):
