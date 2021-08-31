@@ -1,285 +1,195 @@
-transcript start score c-score motif seq
-ecoli_16S 79 73.04 2.49 ((((....)))) GAAGCUUGCUUC
-5domain_16S_rRNA_ecoli 53 68.54 2.34 ((((....)))) GAAGCUUGCUUC
-hvol_16S 1385 66.75 2.28 ((((....)))) CACCACACGGUG
-ecoli_16S 761 65.79 2.25 ((((....)))) GUGCGAAAGCGU
-ecoli_23S 2353 60.15 2.06 ((((....)))) GCGUGACGGCGC
-ecoli_16S 155 59.90 2.05 ((((....)))) ACUGGAAACGGU
-cdiff_16S 796 59.23 2.03 ((((....)))) GGGGGTTACCCC
-hvol_16S 1210 59.43 2.03 ((((....)))) UCUCGAAAGAGA
-cdiff_16S 797 58.81 2.01 ((((....)))) GGGGTTACCCCC
-Group_II_intron_O_iheyensis 304 57.94 1.99 ((((....)))) CCUGUUCGCAGG
-ecoli_16S 894 57.81 1.98 ((((....)))) GGCCGCAAGGUU
-5domain_16S_rRNA_ecoli 129 56.16 1.93 ((((....)))) ACUGGAAACGGU
-hvol_16S 837 56.15 1.93 ((((....)))) GUCCGCAAGGAU
-ecoli_16S 376 56.12 1.92 ((((....)))) GGGCGCAAGCCU
-5S_rRNA_ecoli 20 55.48 1.90 ((((....)))) GGUGGUCCCACC
-hvol_16S 1075 53.68 1.84 ((((....)))) CAGUUUCGACUG
-Group_II_intron_O_iheyensis 365 53.28 1.83 ((((....)))) UACCGAACGGUA
-ecoli_23S 134 53.00 1.82 ((((....)))) GUGUUUCGACAC
-5domain_16S_rRNA_ecoli 350 51.69 1.78 ((((....)))) GGGCGCAAGCCU
-ecoli_16S 762 51.72 1.78 ((((....)))) UGCGAAAGCGUG
-ecoli_23S 408 51.68 1.78 ((((....)))) GGGGACCAUCCU
-Hepatitis_C_virus_IRES_domain 129 51.57 1.77 ((((....)))) GGUGAGUACACC
-5domain_23S_rRNA_ecoli 120 51.50 1.77 ((((....)))) GUGUUUCGACAC
-Group_I_Intron_T_thermophila 323 51.39 1.77 ((((....)))) UCCUUAAUGGGA
-cdiff_16S 175 51.52 1.77 ((((....)))) GAGAGGCATCTC
-Group_II_intron_O_iheyensis 335 50.09 1.73 ((((....)))) GGCGUUCGCGCC
-ecoli_23S 541 50.09 1.73 ((((....)))) ACGCUUAGGCGU
-cdiff_16S 363 49.34 1.70 ((((....)))) GGGCGAAAGCCT
-ecoli_23S 1169 49.32 1.70 ((((....)))) ACGCUUAUGCGU
-cdiff_16S 403 48.89 1.69 ((((....)))) GGCCTTCGGGTC
-p546_bl3 133 48.76 1.68 ((((....)))) UAUAUAUAUAUA
-Group_I_Intron_T_thermophila 384 48.15 1.66 ((((....)))) AUGCGAAAGUAU
-ecoli_23S 397 47.70 1.65 ((((....)))) UCUGAAUAUGGG
-hvol_16S 355 47.16 1.63 ((((....)))) GCACGCAAGUGC
-5domain_23S_rRNA_ecoli 383 46.71 1.61 ((((....)))) UCUGAAUAUGGG
-cdiff_16S 176 46.52 1.61 ((((....)))) AGAGGCATCTCT
-cdiff_16S 140 46.15 1.60 ((((....)))) TACCGAAAGGTA
-5domain_23S_rRNA_ecoli 394 45.98 1.59 ((((....)))) GGGGACCAUCCU
-hvol_16S 237 45.98 1.59 ((((....)))) GGGUAACGGCCC
-hvol_16S 1318 45.18 1.56 ((((....)))) GGUGAAUACGUC
-hvol_16S 210 43.96 1.52 ((((....)))) UGGCUGCGGCCG
-ecoli_16S 541 43.20 1.50 ((((....)))) GGUGCAAGCGUU
-Hepatitis_C_virus_IRES_domain 262 42.79 1.49 ((((....)))) GCCUGAUAGGGU
-5domain_16S_rRNA_ecoli 515 42.58 1.48 ((((....)))) GGUGCAAGCGUU
-cdiff_16S 1301 42.69 1.48 ((((....)))) GTTACTAGTAAT
-Lysine_riboswitch_T_maritime 146 42.33 1.47 ((((....)))) GGAGGUCUCUCC
-Group_II_intron_O_iheyensis 203 42.27 1.47 ((((....)))) GCCAAAGUUGGU
-hvol_16S 1112 42.00 1.46 ((((....)))) CUGCUAAAGCGG
-hvol_16S 130 41.67 1.45 ((((....)))) UCGGGAAACUGA
-M-Box_riboswitch 109 41.35 1.44 ((((....)))) GGAUGCUUGUCC
-cdiff_16S 1331 41.34 1.44 ((((....)))) GGTGAATGCGTT
-ecoli_16S 416 41.15 1.43 ((((....)))) GGCCUUCGGGUU
-5domain_16S_rRNA_ecoli 390 40.28 1.41 ((((....)))) GGCCUUCGGGUU
-ecoli_16S 931 40.46 1.41 ((((....)))) CCGCACAAGCGG
-Group_I_intron_Azoarcus_sp 189 39.53 1.38 ((((....)))) UGGCGAAAGUCA
-5domain_23S_rRNA_ecoli 106 38.88 1.36 ((((....)))) UGGGGAAACCCA
-ecoli_23S 120 38.88 1.36 ((((....)))) UGGGGAAACCCA
-cdiff_16S 326 37.04 1.30 ((((....)))) CTCCTACGGGAG
-ecoli_23S 1219 36.29 1.28 ((((....)))) UGCUGUGAGGCA
-Lysine_riboswitch_T_maritime 35 35.78 1.26 ((((....)))) UCCCAUCAGGGG
-ecoli_23S 1530 35.57 1.25 ((((....)))) GCACUACGGUGC
-Adenine_riboswitch_V_vulnificus 29 33.98 1.20 ((((....)))) UGGGAGUUUCUA
-cdiff_16S 71 33.58 1.19 ((((....)))) TTACTTCGGTAA
-cdiff_16S 245 33.67 1.19 ((((....)))) AGGTAACGGCTT
-Group_II_intron_O_iheyensis 44 33.14 1.18 ((((....)))) CUGUGAAGGCAG
-hvol_16S 263 33.13 1.18 ((((....)))) CGGUACGGGUUG
-Group_II_intron_O_iheyensis 394 32.98 1.17 ((((....)))) GGAGUUCGCUCU
-cdiff_16S 986 32.95 1.17 ((((....)))) TCCCTTCGGGGA
-hvol_16S 64 32.79 1.17 ((((....)))) GAGUUCAUACUC
-ecoli_16S 198 32.91 1.17 ((((....)))) GAGGGGGACCUU
-ecoli_23S 2140 32.91 1.17 ((((....)))) GGACGCCAGUCU
-cdiff_16S 854 32.46 1.16 ((((....)))) GCTCGCAAGAGT
-cdiff_16S 596 31.58 1.13 ((((....)))) CTTGAAACTGGG
-Group_I_intron_Azoarcus_sp 108 30.80 1.11 ((((....)))) GGCGCCUGCGCC
-Group_II_intron_O_iheyensis 263 30.83 1.11 ((((....)))) CGGGGAGGUCUG
-cdiff_16S 177 30.91 1.11 ((((....)))) GAGGCATCTCTT
-ecoli_16S 339 30.71 1.10 ((((....)))) CUCCUACGGGAG
-hvol_16S 1409 29.74 1.07 ((((....)))) CUUCGCAAGGGG
-ecoli_16S 1009 29.78 1.07 ((((....)))) UUCAGAGAUGAG
-5S_rRNA_ecoli 102 29.22 1.06 ((((....)))) GUAGGGAACUGC
-ecoli_23S 662 29.47 1.06 ((((....)))) GGGUAUAGACCC
-ecoli_23S 2354 28.51 1.04 ((((....)))) CGUGACGGCGCG
-Hepatitis_C_virus_IRES_domain 273 27.54 1.01 ((((....)))) UGCUUGCGAGUG
-ecoli_16S 293 27.53 1.01 ((((....)))) GUCUGAGAGGAU
-Group_I_intron_Azoarcus_sp 71 27.39 1.00 ((((....)))) GCCCGCCCGGGC
-5domain_16S_rRNA_ecoli 232 26.85 0.99 ((((....)))) GGGUAACGGCUC
-ecoli_23S 823 27.12 0.99 ((((....)))) CUAUUUAGGUAG
-5domain_16S_rRNA_ecoli 172 25.95 0.96 ((((....)))) GAGGGGGACCUU
-p546_bl3 132 25.05 0.93 ((((....)))) AUAUAUAUAUAU
-hvol_16S 1290 24.94 0.93 ((((....)))) CGGUAGUAAUCG
-cdiff_16S 122 24.80 0.92 ((((....)))) CTGTACACACGG
-ecoli_23S 303 24.51 0.92 ((((....)))) GUCUGGAAAGGC
-ecoli_16S 258 24.37 0.91 ((((....)))) GGGUAACGGCUC
-ecoli_16S 824 24.17 0.91 ((((....)))) GACUUGGAGGUU
-5domain_23S_rRNA_ecoli 289 23.85 0.90 ((((....)))) GUCUGGAAAGGC
-ecoli_23S 1796 24.04 0.90 ((((....)))) UGUGCAAACACG
-Group_II_intron_O_iheyensis 162 23.79 0.89 ((((....)))) UAUCAAUGGAUG
-cdiff_16S 231 23.76 0.89 ((((....)))) TTAGCTAGTTGG
-5domain_16S_rRNA_ecoli 313 23.36 0.88 ((((....)))) CUCCUACGGGAG
-ecoli_16S 1370 23.43 0.88 ((((....)))) GGUGAAUACGUU
-ecoli_23S 1206 23.42 0.88 ((((....)))) GCCUGCGAAGGU
-Group_I_intron_Azoarcus_sp 4 22.42 0.85 ((((....)))) AUAUUUCGAUGU
-ecoli_23S 2250 22.15 0.85 ((((....)))) GGGGCGGUCUCC
-ecoli_23S 953 22.40 0.85 ((((....)))) GGUGCUAACGUC
-cyclic_di-GMP_riboswitch 20 21.84 0.84 ((((....)))) AUUCGAAAGAGU
-5domain_16S_rRNA_ecoli 267 21.84 0.84 ((((....)))) GUCUGAGAGGAU
-hvol_16S 1445 21.72 0.83 ((((....)))) UAGGGGAAUCUG
-cdiff_16S 280 20.81 0.81 ((((....)))) ACCTGAGAGGGT
-hvol_16S 898 20.74 0.81 ((((....)))) GUUUAAUUGGAC
-Group_I_Intron_T_thermophila 151 19.89 0.78 ((((....)))) AGGGGAAACUUU
-5domain_23S_rRNA_ecoli 99 18.60 0.75 ((((....)))) UUCCGAAUGGGG
-ecoli_23S 113 18.60 0.75 ((((....)))) UUCCGAAUGGGG
-hvol_16S 1201 17.57 0.72 ((((....)))) GGGUUGCUAUCU
-ecoli_23S 2191 17.52 0.72 ((((....)))) AUGUUCUAACGU
-cdiff_16S 149 17.20 0.71 ((((....)))) GTATGCTAATAC
-cdiff_16S 683 17.21 0.71 ((((....)))) TTGCGAAGGCGG
-ecoli_23S 2401 17.09 0.71 ((((....)))) UUCUGAAUGGAA
-Group_II_intron_O_iheyensis 145 16.47 0.69 ((((....)))) CUUCAUAUGAGG
-Group_II_intron_O_iheyensis 168 15.80 0.67 ((((....)))) UGGAUGAGUUUG
-hvol_16S 451 15.77 0.67 ((((....)))) CGGUGCCAGCCG
-Hepatitis_C_virus_IRES_domain 190 15.44 0.66 ((((....)))) CUGGAGAUUUGG
-cdiff_16S 1018 15.24 0.66 ((((....)))) TGGTTGTCGTCA
-hvol_16S 318 15.44 0.66 ((((....)))) GCCCUACGGGGC
-ecoli_23S 160 14.83 0.65 ((((....)))) AAUCCAUAGGUU
-ecoli_23S 296 14.86 0.65 ((((....)))) UGGAAGCGUCUG
-5domain_23S_rRNA_ecoli 146 14.68 0.64 ((((....)))) AAUCCAUAGGUU
-Hepatitis_C_virus_IRES_domain 288 13.75 0.62 ((((....)))) CGGGAGGUCUCG
-Group_I_Intron_T_thermophila 170 13.60 0.62 ((((....)))) CCUUGCAAAGGG
-ecoli_23S 1247 13.80 0.62 ((((....)))) AGUGCGAAUGCU
-5domain_23S_rRNA_ecoli 282 13.46 0.61 ((((....)))) UGGAAGCGUCUG
-cyclic_di-GMP_riboswitch 80 13.01 0.60 ((((....)))) GUUACCGAUGGC
-cdiff_16S 985 13.10 0.60 ((((....)))) TTCCCTTCGGGG
-cdiff_16S 1259 12.98 0.60 ((((....)))) CAGTTCGGATTG
-ecoli_23S 746 12.67 0.59 ((((....)))) UUGAAAAAUUAG
-ecoli_23S 2641 11.87 0.57 ((((....)))) GGGGGCUGCUCC
-ecoli_23S 325 11.32 0.56 ((((....)))) GGGUGACAGCCC
-ecoli_23S 2481 11.28 0.56 ((((....)))) GACGGCGGUGUU
-5domain_23S_rRNA_ecoli 55 10.50 0.54 ((((....)))) CGAUAAGCGUCG
-ecoli_23S 69 10.50 0.54 ((((....)))) CGAUAAGCGUCG
-ecoli_23S 2329 10.61 0.54 ((((....)))) UGGCAUAAGCCA
-ecoli_23S 1190 10.04 0.53 ((((....)))) GGGGAGCGUUCU
-Lysine_riboswitch_T_maritime 158 9.46 0.52 ((((....)))) GUGGAGAGCCGU
-ecoli_16S 2 9.82 0.52 ((((....)))) AAUUGAAGAGUU
-ecoli_16S 93 9.68 0.52 ((((....)))) UGCUGACGAGUG
-Group_II_intron_O_iheyensis 86 9.21 0.51 ((((....)))) CGUGGCGACAUG
-ecoli_23S 1648 9.13 0.51 ((((....)))) UGAGAGAACUCG
-TPP_riboswitch_ecoli 6 8.81 0.50 ((((....)))) GGGGUGCCCUUC
-cdiff_16S 722 8.80 0.50 ((((....)))) CACGAAAGCGTG
-ecoli_23S 2645 8.75 0.50 ((((....)))) GCUGCUCCUAGU
-Group_II_intron_O_iheyensis 271 8.55 0.49 ((((....)))) UCUGGAAACAGA
-ecoli_23S 2698 8.43 0.49 ((((....)))) UCAUGCCAAUGG
-ecoli_23S 2294 8.47 0.49 ((((....)))) GCUAAUCCUGGU
-5domain_23S_rRNA_ecoli 311 8.05 0.48 ((((....)))) GGGUGACAGCCC
-cdiff_16S 247 8.03 0.48 ((((....)))) GTAACGGCTTAC
-cdiff_16S 253 7.87 0.48 ((((....)))) GCTTACCAAGGC
-ecoli_16S 552 7.96 0.48 ((((....)))) UAAUCGGAAUUA
-ecoli_23S 1209 7.98 0.48 ((((....)))) UGCGAAGGUGUG
-ecoli_23S 550 7.44 0.47 ((((....)))) CGUGUGACUGCG
-ecoli_23S 765 5.82 0.44 ((((....)))) CUUGUGGCUGGG
-ecoli_23S 1309 5.08 0.42 ((((....)))) GGGUUCCUGUCC
-5domain_16S_rRNA_ecoli 67 4.55 0.41 ((((....)))) UGCUGACGAGUG
-Group_I_Intron_T_thermophila 245 4.72 0.41 ((((....)))) CUGUUGAUAUGG
-ecoli_23S 1052 4.77 0.41 ((((....)))) CCAGGAUGUUGG
-ecoli_23S 282 4.79 0.41 ((((....)))) AGUGUGUGUGUU
-ecoli_23S 2413 4.19 0.40 ((((....)))) GGGCCAUCGCUC
-cdiff_16S 1215 3.51 0.39 ((((....)))) GGTTGCCAAGCC
-ecoli_16S 1058 3.59 0.39 ((((....)))) GCUGUCGUCAGC
-ecoli_23S 2218 3.79 0.39 ((((....)))) GUUGCGGACAGU
-ecoli_23S 686 3.72 0.39 ((((....)))) UCUAGCCAUGGG
-hvol_16S 1246 2.99 0.38 ((((....)))) UAGUUCGGAUUG
-cdiff_16S 1473 2.78 0.37 ((((....)))) TATCGGAAGGTG
-p546_bl3 49 2.17 0.36 ((((....)))) AUUAUUUAUAAU
-ecoli_16S 1411 2.23 0.36 ((((....)))) CCAUGGGAGUGG
-ecoli_23S 2478 2.18 0.36 ((((....)))) AUCGACGGCGGU
-M-Box_riboswitch 88 1.60 0.35 ((((....)))) AAGGUGAUUUUU
-5domain_23S_rRNA_ecoli 268 1.61 0.35 ((((....)))) AGUGUGUGUGUU
-p546_bl3 114 0.69 0.34 ((((....)))) AUUAGCAGUAAU
-p546_bl3 128 0.79 0.34 ((((....)))) AUAUAUAUAUAU
-ecoli_23S 2026 1.17 0.34 ((((....)))) UGUGAAGAUGCA
-ecoli_23S 2642 0.48 0.33 ((((....)))) GGGGCUGCUCCU
-p546_bl3 131 -0.54 0.32 ((((....)))) UAUAUAUAUAUA
-cdiff_16S 217 -0.30 0.32 ((((....)))) GGACCCGCGTCT
-M-Box_riboswitch 48 -0.69 0.31 ((((....)))) UGUCCAAAGACG
-ecoli_23S 2844 -0.55 0.31 ((((....)))) GUGUGUAAGCGC
-ecoli_23S 879 -0.89 0.31 ((((....)))) GGGGGUCAUCCC
-ecoli_23S 2323 -1.21 0.30 ((((....)))) GUGCAAUGGCAU
-cdiff_16S 856 -2.14 0.29 ((((....)))) TCGCAAGAGTGA
-ecoli_16S 1006 -2.18 0.29 ((((....)))) GUUUUCAGAGAU
-hvol_16S 1453 -2.73 0.28 ((((....)))) UCUGCGGCUGGA
-hvol_16S 944 -2.68 0.28 ((((....)))) UGAUGACGAUCA
-ecoli_16S 1056 -3.09 0.27 ((((....)))) UGGCUGUCGUCA
-ecoli_16S 91 -3.45 0.27 ((((....)))) UUUGCUGACGAG
-ecoli_23S 2845 -3.91 0.26 ((((....)))) UGUGUAAGCGCA
-ecoli_23S 1740 -5.30 0.24 ((((....)))) GCUGAAAUCAGU
-ecoli_23S 1691 -6.03 0.23 ((((....)))) CUUCGGGAGAAG
-Lysine_riboswitch_T_maritime 76 -7.93 0.21 ((((....)))) CGCCGAAGGGUG
-cdiff_16S 229 -8.31 0.20 ((((....)))) GATTAGCTAGTT
-cdiff_16S 761 -9.70 0.19 ((((....)))) TAGTCCACGCTG
-ecoli_23S 2391 -9.27 0.19 ((((....)))) GAUCCGGUGGUU
-p546_bl3 129 -9.79 0.18 ((((....)))) UAUAUAUAUAUA
-cdiff_16S 60 -10.48 0.18 ((((....)))) AGTTGAGCGATT
-ecoli_23S 551 -10.31 0.18 ((((....)))) GUGUGACUGCGU
-ecoli_23S 737 -10.44 0.18 ((((....)))) CGACUAAUGUUG
-cdiff_16S 1035 -11.02 0.17 ((((....)))) TGTCGTGAGATG
-ecoli_16S 436 -11.59 0.17 ((((....)))) CUUUCAGCGGGG
-ecoli_23S 2122 -10.89 0.17 ((((....)))) UGGGAGGCUUUG
-ecoli_23S 2492 -10.74 0.17 ((((....)))) UUGGCACCUCGA
-tRNA_phe_ecoli 37 -11.86 0.16 ((((....)))) GAUCUGGAGGUC
-tRNA_Asp_yeast 24 -12.63 0.16 ((((....)))) AUGGGCGCUUGU
-p546_bl3 130 -12.18 0.16 ((((....)))) AUAUAUAUAUAU
-Lysine_riboswitch_T_maritime 68 -11.77 0.16 ((((....)))) GGCGAGGGCGCC
-5domain_16S_rRNA_ecoli 410 -12.51 0.16 ((((....)))) CUUUCAGCGGGG
-ecoli_23S 2289 -12.15 0.16 ((((....)))) GGUUGGCUAAUC
-Group_I_Intron_T_thermophila 8 -13.52 0.15 ((((....)))) AAUAGCAAUAUU
-Fluoride_riboswitch_P_syringae 35 -14.58 0.14 ((((....)))) CUGCGCCCGUAG
-Group_II_intron_O_iheyensis 28 -13.77 0.14 ((((....)))) GGGUGAGAGUCC
-ecoli_16S 1298 -14.59 0.14 ((((....)))) UAGUCCGGAUUG
-ecoli_23S 1720 -14.13 0.14 ((((....)))) UGAGGUCCCUCG
-ecoli_23S 2816 -13.82 0.14 ((((....)))) GUUGAAGACGAC
-ecoli_16S 1073 -15.70 0.13 ((((....)))) UGUUGUGAAAUG
-ecoli_23S 849 -14.94 0.13 ((((....)))) AUCUCCGGGGGU
-5domain_16S_rRNA_ecoli 65 -16.16 0.12 ((((....)))) UUUGCUGACGAG
-5domain_23S_rRNA_ecoli 372 -16.81 0.12 ((((....)))) GUGGUAUCCUGU
-Group_I_Intron_T_thermophila 379 -17.29 0.12 ((((....)))) UUUGUAUGCGAA
-Group_II_intron_O_iheyensis 73 -16.71 0.12 ((((....)))) ACGCAAGGGUGU
-hvol_16S 1282 -16.63 0.12 ((((....)))) GCUGGAUUCGGU
-hvol_16S 740 -16.94 0.12 ((((....)))) UAGUCCUAGCUG
-hvol_16S 383 -16.04 0.12 ((((....)))) GUGCGAGGGCAU
-ecoli_23S 552 -16.29 0.12 ((((....)))) UGUGACUGCGUA
-ecoli_23S 386 -16.81 0.12 ((((....)))) GUGGUAUCCUGU
-M-Box_riboswitch 21 -17.56 0.11 ((((....)))) GUAUGGAGAUAC
-Hepatitis_C_virus_IRES_domain 203 -17.53 0.11 ((((....)))) CGUGCCCCCGCG
-Group_I_Intron_T_thermophila 204 -19.92 0.10 ((((....)))) UGGUCCUAACCA
-Group_II_intron_O_iheyensis 297 -18.97 0.10 ((((....)))) AUAGUACCCUGU
-Group_II_intron_O_iheyensis 256 -19.28 0.10 ((((....)))) UCUUACCCGGGG
-cdiff_16S 5 -19.89 0.10 ((((....)))) TTGAGAGTTTGA
-p546_bl3 55 -20.93 0.09 ((((....)))) UAUAAUAAUAUA
-hvol_16S 1199 -20.32 0.09 ((((....)))) AUGGGUUGCUAU
-ecoli_16S 437 -20.23 0.09 ((((....)))) UUUCAGCGGGGA
-ecoli_16S 1124 -21.11 0.09 ((((....)))) GUUGCCAGCGGU
-ecoli_23S 1201 -21.71 0.09 ((((....)))) UGUAAGCCUGCG
-ecoli_23S 859 -21.04 0.09 ((((....)))) GUAGAGCACUGU
-Adenine_riboswitch_V_vulnificus 36 -22.42 0.08 ((((....)))) UUCUACCAAGAG
-Group_I_Intron_T_thermophila 18 -23.01 0.08 ((((....)))) UUUACCUUUGGA
-hvol_16S 782 -23.42 0.08 ((((....)))) UACGAGCCUGUG
-hvol_16S 272 -22.47 0.08 ((((....)))) UUGUGAGAGCAA
-ecoli_23S 2596 -22.75 0.08 ((((....)))) UGAGACAGUUCG
-5domain_16S_rRNA_ecoli 411 -25.63 0.07 ((((....)))) UUUCAGCGGGGA
-cdiff_16S 611 -24.20 0.07 ((((....)))) CTTGAGTGCAGG
-hvol_16S 996 -24.85 0.07 ((((....)))) UGGCCGCCGUCA
-ecoli_16S 1304 -25.03 0.07 ((((....)))) GGAUUGGAGUCU
-ecoli_23S 1480 -25.21 0.07 ((((....)))) CUGGUUUUCCAG
-Lysine_riboswitch_T_maritime 109 -26.01 0.06 ((((....)))) UGCCUGGGGGUA
-cdiff_16S 1020 -27.16 0.06 ((((....)))) GTTGTCGTCAGC
-Lysine_riboswitch_T_maritime 153 -28.70 0.05 ((((....)))) UCUCCGUGGAGA
-cdiff_16S 1411 -30.16 0.05 ((((....)))) TTTTGGAAGAAG
-cdiff_16S 1171 -29.14 0.05 ((((....)))) CTTATGCTTAGG
-cdiff_16S 1405 -28.77 0.05 ((((....)))) CTAACCTTTTGG
-hvol_16S 68 -29.35 0.05 ((((....)))) UCAUACUCGUGG
-hvol_16S 242 -29.78 0.05 ((((....)))) ACGGCCCACCGU
-ecoli_23S 1 -28.45 0.05 ((((....)))) GGUUAAGCGACU
-ecoli_23S 1557 -30.25 0.05 ((((....)))) CCUGCUUCCAGG
-ecoli_23S 2822 -28.40 0.05 ((((....)))) GACGACGACGUU
-Lysine_riboswitch_T_maritime 152 -33.16 0.04 ((((....)))) CUCUCCGUGGAG
-Adenine_riboswitch_V_vulnificus 25 -32.04 0.04 ((((....)))) GGUUUGGGAGUU
-Adenine_riboswitch_V_vulnificus 50 -33.96 0.04 ((((....)))) UUAAACUCUUGA
-Group_II_intron_O_iheyensis 379 -31.85 0.04 ((((....)))) UACGGUGGUGUG
-ecoli_23S 2544 -33.30 0.04 ((((....)))) GGUAUGGCUGUU
-cdiff_16S 1465 -35.35 0.03 ((((....)))) GGTAGCCGTATC
-hvol_16S 960 -34.95 0.03 ((((....)))) GAUGACCUUAUC
-ecoli_16S 1066 -39.06 0.03 ((((....)))) CAGCUCGUGUUG
-ecoli_23S 1035 -36.47 0.03 ((((....)))) UGGGAAGGCCCA
-ecoli_23S 2210 -36.88 0.03 ((((....)))) UAAUCCGGGUUG
-ecoli_23S 2334 -38.28 0.03 ((((....)))) UAAGCCAGCUUG
-5domain_23S_rRNA_ecoli 77 -45.57 0.02 ((((....)))) AUGAACCGUUAU
-Group_II_intron_O_iheyensis 378 -44.77 0.02 ((((....)))) GUACGGUGGUGU
-cdiff_16S 399 -39.87 0.02 ((((....)))) TGAAGGCCTTCG
-ecoli_23S 91 -42.70 0.02 ((((....)))) AUGAACCGUUAU
-ecoli_23S 2342 -40.76 0.02 ((((....)))) CUUGACUGCGAG
-5domain_16S_rRNA_ecoli 339 -51.79 0.01 ((((....)))) UAUUGCACAAUG
-cdiff_16S 352 -52.22 0.01 ((((....)))) TATTGCACAATG
-ecoli_16S 365 -53.11 0.01 ((((....)))) UAUUGCACAAUG
-ecoli_23S 2067 -48.11 0.01 ((((....)))) GUGAACCUUUAC
-ecoli_23S 1788 -50.27 0.01 ((((....)))) CACAGCACUGUG
+transcript start score c-score BCE MEL Prob(motif) motif path seq
+cdiff_16S 797 63.67 2.28 18.44 -3.0 0.932 ((((...)))) 11110001111 GGGGTTACCCC
+ecoli_16S 199 43.34 1.57 18.71 -0.7 0.883 ((((...)))) 11110001111 AGGGGGACCUU
+cdiff_16S 109 40.38 1.47 18.74 -0.5 0.872 ((((...)))) 11110001111 TGGGTAACCTA
+5domain_16S_rRNA_ecoli 173 37.85 1.39 19.78 -0.7 0.852 ((((...)))) 11110001111 AGGGGGACCUU
+Group_I_Intron_T_thermophila 199 39.30 1.44 13.11 -2.7 0.852 ((((...)))) 11110001111 GGACAUGGUCC
+Group_I_intron_Azoarcus_sp 96 43.47 1.58 20.44 -2.7 0.845 ((((...)))) 11110001111 GAGCCAAGCUU
+hvol_16S 956 41.09 1.50 28.89 0.0 0.845 ((((...)))) 11110001111 GGUUGAUGACC
+Group_I_Intron_T_thermophila 88 36.14 1.33 9.66 -4.3 0.818 ((((...)))) 11110001111 GUUUAAAAGGC
+Group_I_Intron_T_thermophila 237 33.23 1.23 24.46 0.0 0.817 ((((...)))) 11110001111 CAGAUCUUCUG
+cyclic_di-GMP_riboswitch 73 20.35 0.83 8.95 0.0 0.812 ((((...)))) 11110001111 UAGCGGGGUUA
+ecoli_23S 1105 49.28 1.78 23.99 -5.5 0.811 ((((...)))) 11110001111 UGGUCGAGUCG
+cdiff_16S 1017 27.16 1.04 18.69 0.0 0.806 ((((...)))) 11110001111 ATGGTTGTCGT
+hvol_16S 779 37.81 1.39 38.98 0.0 0.774 ((((...)))) 11110001111 GGCUACGAGCC
+cdiff_16S 986 27.92 1.06 29.74 0.0 0.751 ((((...)))) 11110001111 TCCCTTCGGGG
+ecoli_23S 2223 17.57 0.75 18.75 0.0 0.741 ((((...)))) 11110001111 GGACAGUGUCU
+cdiff_16S 862 34.73 1.28 29.09 -2.9 0.734 ((((...)))) 11110001111 GAGTGAAACTC
+hvol_16S 1181 40.03 1.46 32.19 -3.9 0.733 ((((...)))) 11110001111 GCUACAAUGGU
+ecoli_23S 2683 55.87 2.01 18.66 -12.5 0.724 ((((...)))) 11110001111 CUGGUGUUCGG
+ecoli_16S 1233 25.45 0.98 31.22 0.0 0.723 ((((...)))) 11110001111 GCUACAAUGGC
+ecoli_23S 2647 25.50 0.98 18.74 -2.9 0.723 ((((...)))) 11110001111 UGCUCCUAGUA
+ecoli_16S 588 22.68 0.90 18.74 -2.5 0.712 ((((...)))) 11110001111 GUUUGUUAAGU
+cdiff_16S 783 33.77 1.25 20.16 -5.5 0.712 ((((...)))) 11110001111 GTACTAGGTGU
+ecoli_23S 363 27.90 1.06 36.13 -0.4 0.7 ((((...)))) 11110001111 GCUCGAUGAGU
+ecoli_16S 582 21.82 0.87 18.86 -2.9 0.693 ((((...)))) 11110001111 CAGGCGGUUUG
+Group_II_intron_O_iheyensis 125 20.85 0.84 8.95 -5.5 0.676 ((((...)))) 11110001111 UUCGGUCUGAG
+tRNA_Asp_yeast 50 27.36 1.04 11.02 -7.1 0.67 ((((...)))) 11110001111 GGGUUCAAUUC
+ecoli_23S 2617 13.63 0.64 20.34 -1.3 0.665 ((((...)))) 11110001111 UGCCGUGGGCG
+ecoli_23S 1303 29.76 1.12 36.71 -2.1 0.662 ((((...)))) 11110001111 GACCAAGGGUU
+ecoli_16S 1132 16.51 0.72 26.64 -0.8 0.658 ((((...)))) 11110001111 CGGUCCGGCCG
+ecoli_16S 200 35.58 1.31 29.9 -5.7 0.656 ((((...)))) 11110001111 GGGGGACCUUC
+ecoli_23S 589 5.13 0.43 19.03 -0.1 0.651 ((((...)))) 11110001111 UAUAUUCUGUA
+Group_I_Intron_T_thermophila 152 22.29 0.89 8.94 -6.9 0.645 ((((...)))) 11110001111 GGGGAAACUUU
+Hepatitis_C_virus_IRES_domain 108 4.34 0.41 19.98 -0.2 0.637 ((((...)))) 11110001111 GCCAUAGUGGU
+cdiff_16S 1102 29.94 1.13 21.36 -6.6 0.635 ((((...)))) 11110001111 TGGGCACTCTA
+ecoli_23S 2098 9.28 0.53 18.78 -1.7 0.631 ((((...)))) 11110001111 UUGAGCCUUGA
+ecoli_23S 409 26.47 1.01 44.76 -0.6 0.62 ((((...)))) 11110001111 GGGACCAUCCU
+ecoli_16S 584 17.18 0.73 18.91 -4.0 0.619 ((((...)))) 11110001111 GGCGGUUUGUU
+ecoli_23S 2181 12.43 0.61 18.77 -2.96 0.614 ((((...)))) 11110001111 UUAAUGUUUGA
+cdiff_16S 1225 29.02 1.10 29.42 -5.2 0.611 ((((...)))) 11110001111 CCGTAAGGTGG
+tRNA_phe_ecoli 8 8.60 0.51 12.35 -3.8 0.607 ((((...)))) 11110001111 UAGCUCAGUUG
+hvol_16S 201 19.06 0.79 23.77 -3.8 0.605 ((((...)))) 11110001111 UGUAGGAUGUG
+ecoli_23S 1901 20.65 0.84 21.96 -4.9 0.597 ((((...)))) 11110001111 ACGGCGGCCGU
+ecoli_23S 2184 17.07 0.73 18.77 -4.7 0.596 ((((...)))) 11110001111 AUGUUUGAUGU
+ecoli_16S 845 7.04 0.47 28.98 0.0 0.593 ((((...)))) 11110001111 AGGCGUGGCUU
+hvol_16S 1387 39.75 1.45 25.79 -10.1 0.587 ((((...)))) 11110001111 CCACACGGUGG
+Group_I_Intron_T_thermophila 170 6.96 0.47 18.09 -2.9 0.58 ((((...)))) 11110001111 CCUUGCAAAGG
+ecoli_23S 1436 6.65 0.47 22.74 -1.8 0.579 ((((...)))) 11110001111 GCUAUGUUGGC
+5domain_16S_rRNA_ecoli 174 29.13 1.10 31.81 -5.7 0.577 ((((...)))) 11110001111 GGGGGACCUUC
+hvol_16S 415 19.51 0.80 44.87 0.0 0.573 ((((...)))) 11110001111 CCGUAAGGCGG
+ecoli_23S 2642 11.61 0.58 22.1 -3.6 0.561 ((((...)))) 11110001111 GGGGCUGCUCC
+ecoli_23S 2793 19.28 0.80 46.1 0.0 0.561 ((((...)))) 11110001111 CCCUUUAAGGG
+hvol_16S 142 37.88 1.39 30.26 -9.4 0.556 ((((...)))) 11110001111 GGCUAAUAGUU
+ecoli_23S 2383 13.35 0.63 41.09 -0.1 0.545 ((((...)))) 11110001111 GUCAUAGUGAU
+Group_I_intron_Azoarcus_sp 86 23.65 0.93 22.66 -7.7 0.527 ((((...)))) 11110001111 UGGCAACGCCG
+Group_I_Intron_T_thermophila 255 6.23 0.46 16.05 -4.9 0.524 ((((...)))) 11110001111 GGAUGCAGUUC
+ecoli_23S 1231 19.11 0.79 19.7 -7.2 0.524 ((((...)))) 11110001111 UGCUGGAGGUA
+ecoli_16S 1301 4.89 0.43 23.39 -3.1 0.518 ((((...)))) 11110001111 UCCGGAUUGGA
+ecoli_16S 568 22.29 0.89 52.45 -0.7 0.516 ((((...)))) 11110001111 GCGUAAAGCGC
+ecoli_23S 2536 35.19 1.30 18.82 -12.5 0.512 ((((...)))) 11110001111 GUCCCAAGGGU
+hvol_16S 466 18.46 0.77 31.76 -4.6 0.511 ((((...)))) 11110001111 CGGUAAUACCG
+cdiff_16S 1424 15.01 0.67 19.95 -6.5 0.508 ((((...)))) 11110001111 CGTCGAAGGTG
+ecoli_23S 598 6.94 0.47 19.16 -4.8 0.508 ((((...)))) 11110001111 UAGCAAGGUUA
+ecoli_23S 2488 9.85 0.54 20.27 -5.2 0.507 ((((...)))) 11110001111 GUGUUUGGCAC
+Group_I_Intron_T_thermophila 261 -4.16 0.26 23.35 -1.9 0.506 ((((...)))) 11110001111 AGUUCCAGACU
+cdiff_16S 111 -6.82 0.22 29.29 -0.2 0.505 ((((...)))) 11110001111 GGTAACCTACC
+ecoli_23S 1191 -0.22 0.33 27.13 -1.8 0.5 ((((...)))) 11110001111 GGGAGCGUUCU
+cdiff_16S 34 12.43 0.61 35.0 -2.7 0.497 ((((...)))) 11110001111 CGCTGGCGGCG
+ecoli_23S 862 5.85 0.45 23.0 -4.4 0.483 ((((...)))) 11110001111 GAGCACUGUUU
+ecoli_23S 2559 9.22 0.53 44.59 -0.3 0.477 ((((...)))) 11110001111 CAUUUAAAGUG
+ecoli_23S 2678 5.57 0.44 31.28 -2.8 0.47 ((((...)))) 11110001111 CAUCACUGGUG
+ecoli_23S 2230 14.83 0.67 33.04 -4.6 0.468 ((((...)))) 11110001111 GUCUGGUGGGU
+ecoli_23S 2240 7.48 0.48 35.88 -2.2 0.468 ((((...)))) 11110001111 UAGUUUGACUG
+ecoli_23S 829 -4.13 0.26 33.34 -1.1 0.454 ((((...)))) 11110001111 AGGUAGCGCCU
+ecoli_23S 351 -1.69 0.30 37.94 -0.5 0.451 ((((...)))) 11110001111 CACAUGCUGUG
+TPP_riboswitch_ecoli 6 15.48 0.69 18.14 -8.9 0.445 ((((...)))) 11110001111 GGGGUGCCCUU
+cdiff_16S 38 -7.50 0.21 31.8 -1.3 0.445 ((((...)))) 11110001111 GGCGGCGTGCC
+ecoli_16S 657 16.33 0.71 27.33 -7.1 0.441 ((((...)))) 11110001111 UCUCGUAGAGG
+ecoli_16S 1087 20.42 0.83 52.39 -2.4 0.441 ((((...)))) 11110001111 GGGUUAAGUCC
+Group_II_intron_O_iheyensis 21 0.67 0.34 27.21 -3.7 0.44 ((((...)))) 11110001111 GUCUAUAGGGU
+5domain_23S_rRNA_ecoli 349 15.09 0.68 55.23 -0.4 0.438 ((((...)))) 11110001111 GCUCGAUGAGU
+ecoli_16S 1055 -11.67 0.17 23.15 -3.1 0.436 ((((...)))) 11110001111 AUGGCUGUCGU
+ecoli_16S 1436 16.51 0.72 20.92 -8.9 0.432 ((((...)))) 11110001111 UAGGUAGCUUA
+ecoli_23S 700 9.69 0.54 23.3 -6.7 0.431 ((((...)))) 11110001111 GGUUGAAGGUU
+ecoli_23S 2615 6.84 0.47 23.75 -6.0 0.43 ((((...)))) 11110001111 UCUGCCGUGGG
+ecoli_23S 1180 8.25 0.50 36.77 -3.3 0.429 ((((...)))) 11110001111 UUGUUGGGUAG
+hvol_16S 33 -5.34 0.24 40.7 0.0 0.428 ((((...)))) 11110001111 UUGGGGUCCGA
+ecoli_23S 1823 10.94 0.57 33.54 -4.7 0.428 ((((...)))) 11110001111 GGUGUGACGCC
+hvol_16S 36 17.63 0.75 41.06 -4.7 0.426 ((((...)))) 11110001111 GGGUCCGAUUU
+5domain_23S_rRNA_ecoli 395 19.45 0.80 62.24 -0.6 0.416 ((((...)))) 11110001111 GGGACCAUCCU
+ecoli_23S 2247 7.77 0.49 35.22 -4.1 0.411 ((((...)))) 11110001111 ACUGGGGCGGU
+5S_rRNA_ecoli 83 2.84 0.38 48.87 0.0 0.409 ((((...)))) 11110001111 GGGGUCUCCCC
+hvol_16S 995 -6.34 0.23 42.64 0.0 0.409 ((((...)))) 11110001111 AUGGCCGCCGU
+hvol_16S 255 13.31 0.63 42.47 -3.9 0.405 ((((...)))) 11110001111 CCGAUAAUCGG
+ecoli_16S 5 3.68 0.40 21.83 -6.6 0.404 ((((...)))) 11110001111 UGAAGAGUUUG
+cdiff_16S 604 0.26 0.33 34.89 -3.0 0.402 ((((...)))) 11110001111 TGGGAGACTTG
+p546_bl3 81 -4.76 0.25 38.13 -1.6 0.398 ((((...)))) 11110001111 UAAUAUAGUUA
+ecoli_23S 1401 4.34 0.41 19.12 -7.7 0.392 ((((...)))) 11110001111 GUACUUGGUGU
+ecoli_23S 1982 18.10 0.76 50.74 -3.8 0.386 ((((...)))) 11110001111 UGGCCAGGCUG
+Group_I_Intron_T_thermophila 53 21.75 0.87 8.47 -14.7 0.384 ((((...)))) 11110001111 CUGGUAGCUAG
+ecoli_23S 1222 10.99 0.57 28.58 -7.2 0.384 ((((...)))) 11110001111 UGUGAGGCAUG
+ecoli_16S 669 18.10 0.76 26.16 -9.6 0.383 ((((...)))) 11110001111 GGGUAGAAUUC
+Group_II_intron_O_iheyensis 299 -7.55 0.21 21.3 -5.8 0.376 ((((...)))) 11110001111 AGUACCCUGUU
+Group_II_intron_O_iheyensis 6 -16.58 0.12 44.31 0.0 0.363 ((((...)))) 11110001111 CCCGGCAUGGG
+ecoli_23S 33 -18.29 0.11 44.85 -0.1 0.352 ((((...)))) 11110001111 CUGGCAGUCAG
+5domain_23S_rRNA_ecoli 337 -2.95 0.28 50.52 -0.5 0.349 ((((...)))) 11110001111 CACAUGCUGUG
+ecoli_23S 702 -0.03 0.33 26.6 -6.7 0.344 ((((...)))) 11110001111 UUGAAGGUUGG
+5S_rRNA_ecoli 11 3.56 0.40 48.8 -2.3 0.34 ((((...)))) 11110001111 CCGUAGCGCGG
+hvol_16S 604 1.90 0.37 26.71 -7.2 0.338 ((((...)))) 11110001111 GCUCGAGGGGU
+Hepatitis_C_virus_IRES_domain 67 -15.49 0.13 48.74 0.0 0.334 ((((...)))) 11110001111 AUGAGUGUCGU
+hvol_16S 494 -13.87 0.14 45.39 -1.0 0.331 ((((...)))) 11110001111 CGAUAUUAUUG
+ecoli_23S 1107 -3.13 0.28 48.81 -1.9 0.318 ((((...)))) 11110001111 GUCGAGUCGGC
+Group_I_Intron_T_thermophila 79 -16.84 0.12 33.79 -4.0 0.315 ((((...)))) 11110001111 AUUGCAUCGGU
+ecoli_23S 2701 9.83 0.54 56.46 -2.7 0.315 ((((...)))) 11110001111 UGCCAAUGGCA
+cdiff_16S 18 -20.16 0.10 50.83 0.0 0.31 ((((...)))) 11110001111 CCTGGCTCAGG
+ecoli_16S 750 -15.24 0.13 35.14 -4.0 0.309 ((((...)))) 11110001111 CUGACGCUCAG
+ecoli_16S 852 0.25 0.33 61.6 0.0 0.302 ((((...)))) 11110001111 GCUUCCGGAGC
+Hepatitis_C_virus_IRES_domain 305 6.63 0.46 62.38 -1.4 0.292 ((((...)))) 11110001111 CGUGCAUCAUG
+cdiff_16S 1049 5.47 0.44 57.37 -2.4 0.29 ((((...)))) 11110001111 GGGTTAAGTCC
+hvol_16S 459 -8.44 0.20 51.54 -2.0 0.277 ((((...)))) 11110001111 GCCGCCGCGGU
+ecoli_23S 578 -6.23 0.23 62.54 0.0 0.269 ((((...)))) 11110001111 GGUCAGCGACU
+5domain_23S_rRNA_ecoli 19 -24.51 0.07 55.62 -0.2 0.267 ((((...)))) 11110001111 CUGGCAGUCAG
+ecoli_23S 1406 -0.34 0.32 40.9 -6.1 0.264 ((((...)))) 11110001111 UGGUGUUACUG
+hvol_16S 794 -13.65 0.15 39.51 -5.0 0.257 ((((...)))) 11110001111 UUGUGCCGUAG
+hvol_16S 896 5.74 0.44 61.77 -3.2 0.243 ((((...)))) 11110001111 CGGUUUAAUUG
+hvol_16S 541 19.32 0.80 29.66 -14.1 0.239 ((((...)))) 11110001111 CGGGAAAUCCG
+Group_II_intron_O_iheyensis 14 -15.17 0.13 33.24 -7.2 0.235 ((((...)))) 11110001111 GGGUGCAGUCU
+cdiff_16S 629 0.38 0.34 47.57 -5.9 0.233 ((((...)))) 11110001111 GAGTGGAATTC
+ecoli_23S 906 -3.63 0.27 63.08 -1.7 0.232 ((((...)))) 11110001111 UGCAAACUGCG
+p546_bl3 51 -9.29 0.19 58.82 -2.0 0.231 ((((...)))) 11110001111 UAUUUAUAAUA
+ecoli_23S 880 -0.23 0.33 55.71 -4.2 0.225 ((((...)))) 11110001111 GGGGUCAUCCC
+cdiff_16S 187 1.35 0.36 55.66 -4.6 0.223 ((((...)))) 11110001111 TTGAATATCAA
+Hepatitis_C_virus_IRES_domain 268 -30.02 0.05 52.16 -2.7 0.219 ((((...)))) 11110001111 UAGGGUGCUUG
+p546_bl3 97 -26.43 0.06 64.47 -0.1 0.216 ((((...)))) 11110001111 UUUAUUAUAAG
+ecoli_23S 2712 2.43 0.38 27.62 -11.6 0.216 ((((...)))) 11110001111 CUGCCCGGUAG
+ecoli_16S 210 -15.15 0.13 39.4 -6.6 0.215 ((((...)))) 11110001111 CGGGCCUCUUG
+SAM_I_riboswitch_T_tengcongensis 2 -7.56 0.21 72.28 0.0 0.209 ((((...)))) 11110001111 UCUUAUCAAGA
+Group_II_intron_O_iheyensis 82 -13.89 0.14 38.19 -7.5 0.204 ((((...)))) 11110001111 UGUCCGUGGCG
+5domain_16S_rRNA_ecoli 184 -19.52 0.10 40.26 -6.6 0.204 ((((...)))) 11110001111 CGGGCCUCUUG
+Group_II_intron_O_iheyensis 3 -29.36 0.05 52.21 -3.5 0.201 ((((...)))) 11110001111 GUGCCCGGCAU
+p546_bl3 90 -5.33 0.24 63.71 -2.8 0.198 ((((...)))) 11110001111 UAAAAUAUUUA
+M-Box_riboswitch 88 -8.35 0.20 36.33 -8.8 0.197 ((((...)))) 11110001111 AAGGUGAUUUU
+ecoli_16S 1198 6.33 0.46 37.33 -11.3 0.19 ((((...)))) 11110001111 GUCAUCAUGGC
+ecoli_23S 2250 5.47 0.44 37.72 -11.2 0.186 ((((...)))) 11110001111 GGGGCGGUCUC
+ecoli_16S 1123 -14.53 0.14 39.35 -8.1 0.184 ((((...)))) 11110001111 UGUUGCCAGCG
+hvol_16S 46 -2.39 0.29 65.38 -3.6 0.181 ((((...)))) 11110001111 UAGCCAUGCUA
+Group_I_intron_Azoarcus_sp 13 -8.36 0.20 38.53 -9.1 0.18 ((((...)))) 11110001111 UGUGCCUUGCG
+Group_I_intron_Azoarcus_sp 14 -8.17 0.21 48.45 -7.3 0.171 ((((...)))) 11110001111 GUGCCUUGCGC
+cdiff_16S 63 -27.82 0.06 57.69 -3.8 0.17 ((((...)))) 11110001111 TGAGCGATTTA
+ecoli_23S 1157 -26.68 0.06 57.85 -3.8 0.17 ((((...)))) 11110001111 GCUGCGGCAGC
+hvol_16S 890 -17.54 0.11 58.97 -4.1 0.168 ((((...)))) 11110001111 AGCCUGCGGUU
+ecoli_16S 437 -18.35 0.11 50.66 -6.0 0.168 ((((...)))) 11110001111 UUUCAGCGGGG
+ecoli_16S 1070 15.45 0.69 72.38 -6.7 0.162 ((((...)))) 11110001111 UCGUGUUGUGA
+ecoli_23S 1856 7.47 0.48 52.33 -9.5 0.161 ((((...)))) 11110001111 UGAUGGGGUUA
+M-Box_riboswitch 3 -5.48 0.24 74.67 -2.2 0.158 ((((...)))) 11110001111 UCGUUAGGUGA
+hvol_16S 1249 10.55 0.56 34.28 -14.9 0.152 ((((...)))) 11110001111 UUCGGAUUGAG
+Group_I_Intron_T_thermophila 22 -33.17 0.04 56.16 -5.0 0.151 ((((...)))) 11110001111 CCUUUGGAGGG
+Fluoride_riboswitch_P_syringae 2 -28.34 0.05 56.07 -5.8 0.14 ((((...)))) 11110001111 CAUUGGAGAUG
+ecoli_16S 396 -37.93 0.03 55.75 -5.8 0.137 ((((...)))) 11110001111 CAUGCCGCGUG
+5domain_16S_rRNA_ecoli 411 -21.36 0.09 57.67 -6.0 0.136 ((((...)))) 11110001111 UUUCAGCGGGG
+hvol_16S 950 -16.12 0.12 53.08 -7.4 0.136 ((((...)))) 11110001111 CGAUCAGGUUG
+cdiff_16S 163 -25.62 0.07 71.11 -2.7 0.136 ((((...)))) 11110001111 GATAATATATT
+ecoli_16S 397 -22.92 0.08 52.48 -7.3 0.133 ((((...)))) 11110001111 AUGCCGCGUGU
+cdiff_16S 1411 -38.80 0.03 56.91 -6.0 0.13 ((((...)))) 11110001111 TTTTGGAAGAA
+Hepatitis_C_virus_IRES_domain 294 -42.01 0.02 82.79 0.0 0.129 ((((...)))) 11110001111 GUCUCGUAGAC
+ecoli_23S 388 -23.89 0.07 52.02 -7.7 0.128 ((((...)))) 11110001111 GGUAUCCUGUC
+ecoli_23S 2236 -36.62 0.03 71.06 -3.0 0.126 ((((...)))) 11110001111 UGGGUAGUUUG
+ecoli_23S 1450 -11.41 0.17 80.08 -2.5 0.122 ((((...)))) 11110001111 GCGACGGUUGU
+ecoli_16S 618 -15.51 0.13 52.52 -8.6 0.121 ((((...)))) 11110001111 CUCAACCUGGG
+5domain_16S_rRNA_ecoli 370 -41.02 0.02 60.55 -5.8 0.12 ((((...)))) 11110001111 CAUGCCGCGUG
+ecoli_23S 2008 -8.55 0.20 88.01 -1.3 0.117 ((((...)))) 11110001111 CAGUGAAAUUG
+5domain_16S_rRNA_ecoli 371 -26.62 0.06 57.06 -7.3 0.115 ((((...)))) 11110001111 AUGCCGCGUGU
+cdiff_16S 1070 -66.38 0.00 81.79 -1.8 0.105 ((((...)))) 11110001111 GCAACCCTTGT
+hvol_16S 952 -27.82 0.06 66.87 -5.8 0.104 ((((...)))) 11110001111 AUCAGGUUGAU
+hvol_16S 1021 -37.02 0.03 85.75 -1.2 0.104 ((((...)))) 11110001111 GGCGUCCUGUU
+cdiff_16S 1032 -13.10 0.15 83.93 -3.0 0.101 ((((...)))) 11110001111 TCGTGTCGTGA
+Group_I_intron_Azoarcus_sp 18 -7.87 0.21 46.51 -12.4 0.0986 ((((...)))) 11110001111 CUUGCGCCGGG
+ecoli_23S 2767 -40.18 0.02 73.88 -5.0 0.0905 ((((...)))) 11110001111 CUUGCCCCGAG
+hvol_16S 1010 -9.96 0.18 75.77 -6.1 0.0901 ((((...)))) 11110001111 UCGUACCGUGA
+Group_II_intron_O_iheyensis 64 -33.57 0.04 70.04 -6.3 0.0875 ((((...)))) 11110001111 GUUAGCCUAAC
+ecoli_23S 2576 -23.22 0.08 61.68 -8.7 0.0865 ((((...)))) 11110001111 GAGCUGGGUUU
+p546_bl3 68 -31.53 0.04 97.83 0.0 0.0864 ((((...)))) 11110001111 UUUGAAAUAAA
+ecoli_23S 2743 -6.91 0.22 87.84 -4.5 0.0811 ((((...)))) 11110001111 UGCUGAAAGCA
+5domain_23S_rRNA_ecoli 374 -31.47 0.04 68.87 -7.7 0.0764 ((((...)))) 11110001111 GGUAUCCUGUC
+ecoli_23S 1818 -36.36 0.03 74.83 -6.2 0.0764 ((((...)))) 11110001111 UAUACGGUGUG
+ecoli_23S 2815 -8.22 0.21 86.61 -5.1 0.0764 ((((...)))) 11110001111 CGUUGAAGACG
+ecoli_23S 1639 -37.71 0.03 80.14 -5.4 0.0721 ((((...)))) 11110001111 CAAGGCGCUUG
+ecoli_23S 1817 -41.97 0.02 75.39 -6.5 0.0715 ((((...)))) 11110001111 GUAUACGGUGU
+ecoli_23S 1483 -21.59 0.09 62.36 -11.0 0.0641 ((((...)))) 11110001111 GUUUUCCAGGC
+ecoli_23S 1943 -47.71 0.01 83.5 -5.7 0.0617 ((((...)))) 11110001111 UUGUCGGGUAA
+ecoli_23S 2824 -45.95 0.02 111.81 -2.4 0.0405 ((((...)))) 11110001111 CGACGACGUUG
+ecoli_23S 568 -34.02 0.04 101.83 -5.1 0.0395 ((((...)))) 11110001111 UUGUAUAAUGG
+ecoli_23S 1456 -43.26 0.02 95.02 -7.0 0.037 ((((...)))) 11110001111 GUUGUCCCGGU
+cdiff_16S 192 -44.20 0.02 106.45 -6.1 0.0293 ((((...)))) 11110001111 TATCAAAGGTG
+hvol_16S 266 -48.33 0.01 113.13 -10.7 0.0128 ((((...)))) 11110001111 UACGGGUUGUG
