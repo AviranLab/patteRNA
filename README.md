@@ -47,8 +47,7 @@ python setup.py install --user
 echo 'export PATH="$PATH:~/.local/bin"' >> ~/.bashrc; source ~/.bashrc
 ```
 
-***Note for macOS Big Sur and Apple M1 users***: Due to an issue, you must use `pip` to run the installation. Be sure to update pip and setuptools before attempting the installation (`python -m pip install -U pip setuptools`). Use the commands:
-
+***Note for macOS Big Sur users***: Due to an issue, you must use `pip` to run the installation. Be sure to update pip and setuptools before attempting the installation (`python -m pip install -U pip setuptools`). Use the commands:
 ```
 python -m pip install .
 ```
@@ -57,6 +56,7 @@ or
 python -m pip install . --user
 ```
 
+***Note for Apple Silicon users (M1)***: Some dependencies are not yet pre-built for Apple Silicon, so you must install them manually if using a native Python executable (i.e., non-`x86_64`). Specifically, to install `numpy`, `scipy`, and `sklearn` properly, follow [these instructions](https://github.com/scipy/scipy/issues/13409) before installing with `pip`.
 
 ### Running a test
 
@@ -245,7 +245,7 @@ The posterior probabilities of pairing states at each nucleotides can be request
 #### Hairpin-derived structure level (HDSL)
 HDSL is a measure of local structure that assists in converting patteRNA's predicted hairpins into a quantitative assenment of structuredness. This will output a FASTA-like file called `hdsl.txt` with HDSL profiles for all transcripts in the input data.
 
-### Examples <a name="examples"></a>
+### Examples 
 
 * Train the model and search for any loop of length 5:
 
