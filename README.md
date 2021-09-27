@@ -18,7 +18,7 @@ The training and scoring implementations are parallelized, so the algorithm can 
 
 ## Getting Started
 
-These instructions will set up patteRNA as a command line tool on your machine.
+These instructions will set up patteRNA as a command line tool.
 
 ### Prerequisites
 
