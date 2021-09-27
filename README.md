@@ -22,7 +22,7 @@ These instructions will set up patteRNA as a command line tool.
 
 ### Prerequisites
 
-**Python 3.7 or newer**. To check the current installed version on your system, run `python3 -V`. If your version is anterior to 3.7, install version 3.7 or later. We recommend the use of virtual environments with [venv](https://docs.python.org/3/library/venv.html). You also need the latest versions of `pip` and `setuptools`, which can be installed by typing: `python -m pip install -U pip setuptools`.
+**Python 3.7 or newer**. To check the current version on your system, run `python3 -V`. If your version is anterior to 3.7, install version 3.7 or later. We recommend the use of virtual environments with [venv](https://docs.python.org/3/library/venv.html). You also need the latest versions of `pip` and `setuptools`, which can be installed by typing: `python -m pip install -U pip setuptools`.
 
 **ViennaRNA Python interface**. [ViennaRNA](https://www.tbi.univie.ac.at/RNA/) is a C library of RNA folding routines. In order for patteRNA to most accurately identify motifs, the [ViennaRNA Python interface](https://www.tbi.univie.ac.at/RNA/documentation.html#interfaces) must be installed and configured for your Python environment. You should be able to run `python -c import RNA` without errors. If the ViennaRNA interface is not detected, patteRNA can still mine motifs but will be slightly less precise. Use the flag `--no-vienna` to avoid warnings.
 
