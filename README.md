@@ -273,7 +273,7 @@ HDSL is a measure of local structure that assists in converting patteRNA's predi
     patteRNA sample_data/weeks_set.shape example_outputs/hdsl -vl --model test/trained_model.json --HDSL
     ```
   
-* Train the model using a set of reference transcripts:
+* Train a model using a set of reference transcripts:
 
     ```
     patteRNA sample_data/weeks_set.shape example_outputs/loop -vl -f sample_data/weeks_set.fa --reference sample_data/weeks_set.dot
