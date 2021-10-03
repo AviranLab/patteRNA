@@ -202,7 +202,7 @@ patteRNA uses a FASTA-like convention for probing data (see this [example file](
 
 ### Training a model on a new dataset
 
-By default, patteRNA will learn its model from the data. Run an example training phase using the command:
+By default, patteRNA learns its model from the data. Run an example training phase using the command:
 
 ```
 patteRNA sample_data/weeks_set.shape sample_output -vl
