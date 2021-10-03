@@ -248,7 +248,7 @@ HDSL is a measure of local structure that assists in converting patteRNA's predi
 
 ### Examples 
 
-* Train the model and search for any loop of length 5:
+* Train the model and search for loops of length 5:
 
     ```
     patteRNA sample_data/weeks_set.shape example_outputs/loop -vl --motif ".{5}" -f sample_data/weeks_set.fa
