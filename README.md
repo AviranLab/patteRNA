@@ -10,9 +10,9 @@ Rapid mining of RNA secondary structure motifs from structure profiling data.
 
 *patteRNA* is an unsupervised pattern recognition algorithm that rapidly mines RNA structure motifs from structure profiling (SP) data. 
 
-It features a discretized observation model, hidden Markov model (DOM-HMM) of reactivity that enables automated and calibrated processing of SP data without a dependence on reference structures. It is compatible with most current probing technique (e.g. SHAPE, DMS, PARS) and can help analyze datasets of any sizes, from small scale experiments to transcriptome-wide assays. It scales well to millions or billions of nucleotides.
+It features a discretized observation model, hidden Markov model (DOM-HMM) of reactivity that enables automated and calibrated processing of SP data without a dependence on reference structures. It is compatible with most current probing techniques (e.g., SHAPE, DMS, PARS) and can help analyze datasets of any size, from small scale experiments to transcriptome-wide assays. It scales well to millions or billions of nucleotides.
 
-The training and scoring implementations are parallelized, so the algorithm can benefit greatly when deployed in a high CPU count environment.
+The training and scoring implementations are parallelized, so the algorithm can benefit greatly when deployed in a high CPU-count environment.
 
 
 
@@ -284,19 +284,15 @@ HDSL is a measure of local structure that assists in converting patteRNA's predi
 If you used patteRNA in your research, please reference the following citations depending on which version of patteRNA you utilized.
 
 **Version 2.1**: \
-Radecki P., Uppuluri R., Deshpande K., and Aviran S. (2021) "Accurate Detection of RNA Stem-Loops in Structurome Data Reveals Widespread Association with Protein Binding Sites." *RNA Biology*. doi TBA.
+Radecki P., Uppuluri R., Deshpande K., and Aviran S. (2021) "Accurate Detection of RNA Stem-Loops in Structurome Data Reveals Widespread Association with Protein Binding Sites." *RNA Biology*. (in press) doi: [10.1080/15476286.2021.1971382](https://doi.org/10.1080/15476286.2021.1971382)
 
 **Version 2.0**: \
-Radecki P., Uppuluri R., and Aviran S. (2021) "Rapid Structure-Function Insights via Hairpin-Centric Analysis of Big RNA Structure Probing Datasets." *NAR Genomics and Bioinformatics* 3(3). doi: [10.1093/nargab/lqab073](https://doi.org/10.1093/nargab/lqab073).
-
-**Version 1.0–1.2**: \
-Ledda M. and Aviran S. (2018) “PATTERNA: Transcriptome-Wide Search for Functional RNA Elements via Structural Data Signatures.” *Genome Biology* 19(28). doi: [10.1186/s13059-018-1399-z](https://doi.org/10.1186/s13059-018-1399-z).
-
+Radecki P., Uppuluri R., and Aviran S. (2021) "Rapid Structure-Function Insights via Hairpin-Centric Analysis of Big RNA Structure Probing Datasets." *NAR Genomics and Bioinformatics* 3(3). doi: [10.1093/nargab/lqab073](https://doi.org/10.1093/nargab/lqab073)
 
 
 ## Issue Reporting
 
-patteRNA is actively supported and all changes are listed in the [CHANGELOG](CHANGES.md). To report a bug open a ticket in the [issues tracker](https://github.com/AviranLab/patteRNA/issues). Features can be requested by opening a ticket in the [pull request](https://github.com/AviranLab/patteRNA/pulls).
+patteRNA is actively supported and all changes are listed in the [CHANGELOG](CHANGES.md). To report a bug open a ticket in the [issues tracker](https://github.com/AviranLab/patteRNA/issues). Features can be requested by opening a [pull request](https://github.com/AviranLab/patteRNA/pulls).
 
 
 

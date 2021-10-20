@@ -78,7 +78,7 @@ def main(testcmd=None):
         if run_config['reference']:
 
             # Spawn training set of reference RNAs
-            logger.info("Using reference set.")
+            logger.info("Using reference set")
             clock.tick()
             reference_set = data.spawn_reference_set()
 

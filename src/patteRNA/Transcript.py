@@ -6,10 +6,10 @@ class Transcript:
     def __init__(self, name, seq, obs):
         self.name = name
         self.seq = seq
-        self.obs = obs
+        self.obs = np.array(obs)
         self.T = len(obs)
         self.obs_dom = None
-        self.ref = -1
+        self.ref = None
 
         self.alpha = None
         self.beta = None

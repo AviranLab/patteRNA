@@ -9,11 +9,9 @@ logger = logging.getLogger(__name__)
 
 class Dataset:
     def __init__(self, fp_observations, fp_sequences=None, fp_references=None):
-
         self.fp_obs = fp_observations
         self.fp_fasta = fp_sequences
         self.fp_refs = fp_references
-
         self.rnas = dict()
         self.stats = dict()
 
@@ -127,9 +125,6 @@ class Dataset:
         if model.emission_model.type == 'DOM':
             for rna in self.rnas:
                 model.emission_model.discretize(self.rnas[rna])
-        # if model.emission_model.type == 'GMM':
-        #     for rna in self.rnas:
-        #         model.emission_model.generate_discrete_masks(self.rnas[rna])
 
         if scoring:
             for rna in self.rnas.values():
@@ -147,7 +142,7 @@ class Dataset:
 
     def spawn_reference_set(self):
         spawned_set = Dataset(fp_observations=None, fp_references=None, fp_sequences=None)
-        references = [rna for rna in self.rnas if self.rnas[rna].ref is not -1]
+        references = [rna for rna in self.rnas if self.rnas[rna].ref is not None]
         spawned_set.rnas = {rna: self.rnas[rna] for rna in references}
         spawned_set.compute_stats()
         return spawned_set
