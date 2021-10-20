@@ -3,6 +3,14 @@ All notable changes to patteRNA are documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1] - 2021-10-20
+### Changes
+- Improved documentation [PR]
+- Improved testing [PR]
+
+### Fixed
+- Improved logging when using reference structures [PR]
+
 ## [2.1-beta] - 2021-08-29
 ### Changes
 - Stable implementation of logistic scoring classifier (can be turned off with `--no-vienna` or `--no-cscores` flags) [PR]
